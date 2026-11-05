@@ -226,6 +226,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold)}
     <button class="ntab" onclick="showPage('calendario',this)" data-central="financeira" style="display:none">Calendário</button>
     <button class="ntab" onclick="showPage('executivo',this)" data-central="financeira" style="display:none">Relatório Exec.</button>
     <button class="ntab" onclick="showPage('fechamento',this)" data-central="financeira" style="display:none">Fechamento Diário<span id="fd-badge"></span></button>
+    <button class="ntab" onclick="showPage('saude',this)" data-central="financeira" style="display:none">Saúde<span id="sh-badge"></span></button>
     <button class="ntab" onclick="showPage('rh',this)" data-central="rh" style="display:none">👥 RH &amp; Performance</button>
     <button class="ntab" onclick="irParaHub()" id="ntab-hub" style="border-left:1px solid rgba(255,255,255,.15);margin-left:6px;display:none">🏠 Trocar Central</button>
   </div>
@@ -865,6 +866,14 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold)}
   <div id="painel-exec"></div>
 </div>
 
+<div class="page" id="page-saude">
+  <div style="max-width:900px;margin:0 auto;padding:4px 0">
+    <h2 style="margin:0 0 4px;font-size:16px">Saúde do sistema</h2>
+    <div style="font-size:12px;color:var(--text-2);margin-bottom:12px">O "técnico" do sistema: confere de hora em hora se os dados estão completos, sem duplicidade e atualizados, se o banco responde, se o robô está importando e se alguém teve erro de tela.</div>
+    <div id="sh-painel"></div>
+  </div>
+</div>
+
 <div class="page" id="page-fechamento">
   <style>
     .fd-scroll{overflow:auto;max-height:70vh}
@@ -1047,6 +1056,7 @@ function showPage(id, el) {
   if (id === 'dashboard') { renderTermometroFolha(); renderRankingSemanal(); renderMensagemGrupo(); }
   if (id === 'rh') { renderMensagemGrupo(); renderMetaGerentes(); }
   if (id === 'fechamento') { renderFechamento(); fdAtualizarAlertas(); }
+  if (id === 'saude') { shRender(); if (!_sh.quando || Date.now() - _sh.quando > 300000) shExecutar(false); }
 }
 
 // ── Hub inicial: escolha entre Central Financeira e Central RH ──
@@ -6388,6 +6398,7 @@ function dispensarAlertaMensal() {
 
 window.addEventListener('unhandledrejection', e => {
   console.warn('Elohim promise error:', e.reason);
+  try { shRegistrarErro('promessa', (e.reason && e.reason.message) || e.reason, e.reason && e.reason.stack); } catch (_) {}
   e.preventDefault();
 });
 
@@ -8072,6 +8083,187 @@ async function fdGravarImportacao() {
   if (okVer) { mostrarToast('Verificação de segurança salva no histórico do mês', 'ok'); fdAtualizarAlertas(true); }
 }
 
+// ── Saúde do sistema: verificações ──
+// Funções puras (sem tela, sem banco): a Central e o robô usam exatamente as mesmas regras.
+const SH_TABELAS = ['lancamentos', 'caixa_dia', 'fechamento_diario', 'verificacao_dia', 'erros_app', 'saude_sistema'];
+function shAvaliar(c) {
+  const out = []; const add = (id, nivel, titulo, detalhe) => out.push({ id, nivel, titulo, detalhe: detalhe || '' });
+  const hoje = c.hoje; // 'YYYY-MM-DD'
+  const dia = s => String(s || '').slice(0, 10);
+  const difDias = (a, b) => Math.round((Date.parse(dia(b) + 'T00:00:00Z') - Date.parse(dia(a) + 'T00:00:00Z')) / 864e5);
+  const exemplos = (arr, f) => arr.slice(0, 3).map(f).join('; ') + (arr.length > 3 ? ` … (+${arr.length - 3})` : '');
+  const sem = s => String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/\s+/g, ' ').trim();
+
+  if (c.semSessao) add('sessao', 'erro', 'Sessão expirada', 'O que for feito agora não é salvo na nuvem. Atualize a página (F5) e entre de novo.');
+
+  // 1) Banco de dados respondendo
+  const tab = c.tabelas || {}; const ruins = Object.keys(tab).filter(t => !tab[t].ok);
+  ruins.forEach(t => add('tabela-' + t, 'erro', `Tabela "${t}" não responde`, (tab[t].erro || 'sem detalhe') + ' — confira se o SQL dessa tabela foi executado no Supabase.'));
+  if (Object.keys(tab).length && !ruins.length) add('tabelas', 'ok', 'Banco de dados respondendo', `${Object.keys(tab).length} tabelas verificadas`);
+
+  // 2) A tela carregou tudo o que está na nuvem?
+  const lanc = c.lancamentos || [];
+  if (c.contagem && c.contagem.lancamentos != null) {
+    const tol = (c.naoSincronizados || 0) + (c.exclusoesPendentes || 0);
+    const falta = c.contagem.lancamentos - lanc.length;
+    if (falta > tol) add('carga', falta > 5 ? 'erro' : 'aviso', `Faltam ${falta} lançamento(s) na tela`, `A nuvem tem ${c.contagem.lancamentos} e foram carregados ${lanc.length}. Atualize a página; se continuar, avise o suporte.`);
+    else if (-falta > tol) add('carga', 'info', 'Tela com mais lançamentos que a nuvem', `Tela: ${lanc.length}; nuvem: ${c.contagem.lancamentos}. Pode ser lançamento recém-criado ainda sincronizando.`);
+    else add('carga', 'ok', 'Lançamentos carregados por completo', `${c.contagem.lancamentos} na nuvem`);
+  }
+  if ((c.naoSincronizados || 0) > 0) add('pend-sync', 'aviso', `${c.naoSincronizados} lançamento(s) ainda não confirmado(s) na nuvem`, 'Mantenha a página aberta com internet até sincronizar.');
+  if ((c.exclusoesPendentes || 0) > 0) add('pend-excl', 'aviso', `${c.exclusoesPendentes} exclusão(ões) ainda não confirmada(s) na nuvem`, 'O sistema tenta de novo sozinho.');
+
+  // 3) Qualidade dos lançamentos
+  const ids = new Map(); const dupId = [];
+  lanc.forEach(l => { if (ids.has(l.id)) dupId.push(l); else ids.set(l.id, 1); });
+  if (dupId.length) add('id-dup', 'erro', `${dupId.length} lançamento(s) com identificador repetido`, exemplos(dupId, l => `${dia(l.data)} ${l.descricao || ''}`));
+  const invValor = lanc.filter(l => !Number.isFinite(Number(l.valor)) || Number(l.valor) <= 0);
+  if (invValor.length) add('valor-inv', 'aviso', `${invValor.length} lançamento(s) com valor zero, negativo ou inválido`, exemplos(invValor, l => `${dia(l.data)} ${l.descricao || '(sem descrição)'} (${l.loja || 'sem loja'})`));
+  const invData = lanc.filter(l => !/^\d{4}-\d{2}-\d{2}/.test(String(l.data || '')) || isNaN(Date.parse(dia(l.data))));
+  if (invData.length) add('data-inv', 'erro', `${invData.length} lançamento(s) com data inválida`, exemplos(invData, l => `${l.descricao || '(sem descrição)'} (${l.loja || 'sem loja'}): "${l.data}"`));
+  const foraFaixa = lanc.filter(l => !invData.includes(l) && (dia(l.data) < '2020-01-01' || difDias(hoje, l.data) > 800));
+  if (foraFaixa.length) add('data-fora', 'aviso', `${foraFaixa.length} lançamento(s) com data muito antiga ou muito distante`, exemplos(foraFaixa, l => `${dia(l.data)} ${l.descricao || ''} (${l.loja || 'sem loja'})`));
+  const semLoja = lanc.filter(l => !String(l.loja || '').trim());
+  if (semLoja.length) add('sem-loja', 'aviso', `${semLoja.length} lançamento(s) sem loja`, exemplos(semLoja, l => `${dia(l.data)} ${l.descricao || ''}`));
+  const grandes = lanc.filter(l => Number(l.valor) > 500000);
+  if (grandes.length) add('valor-grande', 'aviso', `${grandes.length} lançamento(s) acima de R$ 500 mil`, 'Confira se não é erro de digitação (vírgula ou zero a mais). ' + exemplos(grandes, l => `${dia(l.data)} ${l.descricao || ''}: ${Number(l.valor)}`));
+  const grupos = new Map();
+  lanc.forEach(l => { if (!(Number(l.valor) > 0)) return; const k = [sem(l.loja), dia(l.data), Math.round(Number(l.valor) * 100), sem(l.descricao)].join('|'); (grupos.get(k) || grupos.set(k, []).get(k)).push(l); });
+  const dups = [...grupos.values()].filter(g => g.length > 1);
+  if (dups.length) add('dup-prov', 'aviso', `${dups.length} possível(is) lançamento(s) duplicado(s)`, 'Mesma loja, data, valor e descrição: ' + exemplos(dups, g => `${dia(g[0].data)} ${g[0].descricao || ''} (${g.length}x)`));
+  const vencidos = lanc.filter(l => l.status === 'previsto' && dia(l.data) < dia(hoje) && difDias(l.data, hoje) > 7);
+  if (vencidos.length) add('prev-venc', 'info', `${vencidos.length} lançamento(s) "previsto" vencido(s) há mais de 7 dias`, 'Dê baixa (pago/recebido) ou ajuste a data para o fluxo de caixa não ficar distorcido.');
+  if (lanc.length && !invValor.length && !invData.length && !dupId.length && !foraFaixa.length && !semLoja.length && !grandes.length && !dups.length) add('lanc-ok', 'ok', 'Lançamentos sem inconsistência', `${lanc.length} verificados`);
+
+  // 4) Fechamento Diário: lojas sem dados recentes
+  const fech = c.fechamentos || []; const lojas = c.lojas || [];
+  if (fech.length && lojas.length) {
+    const ultima = {}; fech.forEach(f => { if (!ultima[f.loja] || dia(f.data) > ultima[f.loja]) ultima[f.loja] = dia(f.data); });
+    const parados = lojas.filter(l => ultima[l] && difDias(ultima[l], hoje) > 10);
+    const nunca = lojas.filter(l => !ultima[l]);
+    if (parados.length) add('fech-parado', 'aviso', `Fechamento Diário sem dados novos há mais de 10 dias: ${parados.join(', ')}`, parados.map(l => `${l}: último dia ${ultima[l]}`).join('; '));
+    if (nunca.length) add('fech-nunca', 'info', `Fechamento Diário ainda sem nenhum dado: ${nunca.join(', ')}`, '');
+    if (!parados.length && !nunca.length) add('fech-ok', 'ok', 'Fechamento Diário atualizado em todas as lojas', '');
+  } else if (lojas.length) add('fech-vazio', 'info', 'Fechamento Diário ainda não tem dados', 'Importe os relatórios (ou espere o robô) para começar.');
+
+  // 5) Erros de tela nas últimas 24 h
+  if (c.errosApp24h != null) {
+    if (c.errosApp24h >= 10) add('erros-app', 'erro', `${c.errosApp24h} erros de tela nas últimas 24 h`, 'Veja a lista abaixo e avise o suporte.');
+    else if (c.errosApp24h > 0) add('erros-app', 'aviso', `${c.errosApp24h} erro(s) de tela nas últimas 24 h`, 'Veja a lista abaixo.');
+    else add('erros-app', 'ok', 'Nenhum erro de tela nas últimas 24 h', '');
+  }
+
+  // 6) O robô e a verificação do servidor estão vivos?
+  const agora = c.agora || Date.now(); const horas = iso => (agora - Date.parse(iso)) / 36e5;
+  if (c.robo) {
+    const h = horas(c.robo);
+    if (h > 36) add('robo', 'erro', `O robô não importa há ${Math.round(h)} h`, 'Confira o computador/servidor do robô e o arquivo de log.');
+    else add('robo', 'ok', 'Robô importou nas últimas 36 h', `Última: ${new Date(c.robo).toLocaleString('pt-BR')}`);
+  } else add('robo', 'info', 'Robô ainda não ativado', 'Aparece aqui assim que fizer a primeira importação.');
+  if (c.servidor) {
+    const h = horas(c.servidor);
+    if (h > 3) add('servidor', 'aviso', `A verificação horária do servidor está parada há ${Math.round(h)} h`, 'Confira se o agendamento no servidor continua ativo.');
+    else add('servidor', 'ok', 'Verificação horária do servidor ativa', `Última: ${new Date(c.servidor).toLocaleString('pt-BR')}`);
+  }
+  const ord = { erro: 0, aviso: 1, info: 2, ok: 3 };
+  return out.sort((a, b) => ord[a.nivel] - ord[b.nivel]);
+}
+function shResumo(lista) {
+  const n = { erro: 0, aviso: 0, info: 0, ok: 0 }; lista.forEach(i => { n[i.nivel]++; });
+  return { ...n, nivel: n.erro ? 'erro' : n.aviso ? 'aviso' : 'ok' };
+}
+
+// ── Saúde do sistema: tela ──
+const _sh = { lista: [], quando: null, rodando: false, erros: [], servidor: null, robo: null, falhaTabela: false };
+const SH_COR = { erro: '#B91C1C', aviso: '#B45309', info: '#6B7280', ok: '#047857' };
+const SH_ROTULO = { erro: 'ERRO', aviso: 'ATENÇÃO', info: 'INFO', ok: 'OK' };
+
+// Registro automático de erros de tela (nunca atrapalha o uso: falhou ao registrar, ignora)
+const _shErrosVistos = new Map(); let _shErrosMinuto = [];
+function shRegistrarErro(origem, mensagem, detalhe) {
+  try {
+    const msg = String(mensagem || '').slice(0, 300); if (!msg) return;
+    const agora = Date.now();
+    _shErrosMinuto = _shErrosMinuto.filter(t => agora - t < 60000); if (_shErrosMinuto.length >= 5) return;
+    if (_shErrosVistos.has(msg) && agora - _shErrosVistos.get(msg) < 600000) return;
+    _shErrosVistos.set(msg, agora); _shErrosMinuto.push(agora);
+    if (!_usuarioAtual) return;
+    const pg = (document.querySelector('.page.active') || {}).id || '';
+    sb.from('erros_app').insert({ usuario: _usuarioAtual.email || _usuarioAtual.id, pagina: pg, origem, mensagem: msg, detalhe: String(detalhe || '').slice(0, 600) }).then(() => {}, () => {});
+  } catch (e) { /* silencioso */ }
+}
+window.addEventListener('error', e => { shRegistrarErro('erro', e.message, `${(e.filename || '').split('/').pop()}:${e.lineno || ''}`); });
+
+async function shColetar() {
+  const hoje = new Date(Date.now() - 3 * 36e5).toISOString().slice(0, 10); // data no horário de Brasília
+  const ctx = { hoje, agora: Date.now(), lojas: LOJAS_FISICAS, semSessao: !_usuarioAtual, tabelas: {}, contagem: {}, lancamentos: S.lancamentos,
+    naoSincronizados: _idsNaoSincronizados.size, exclusoesPendentes: _idsExclusaoPendente.size,
+    fechamentos: Object.values(S.fechamentoDiario || {}).map(r => ({ loja: r.loja, data: r.data })), errosApp24h: null, robo: null, servidor: null };
+  for (const t of SH_TABELAS) {
+    try {
+      const r = await sb.from(t).select('*', { count: 'exact', head: true });
+      if (r.error) ctx.tabelas[t] = { ok: false, erro: r.error.message || r.error.code || 'erro' };
+      else { ctx.tabelas[t] = { ok: true }; if (t === 'lancamentos') ctx.contagem.lancamentos = r.count; }
+    } catch (e) { ctx.tabelas[t] = { ok: false, erro: 'sem conexão' }; }
+  }
+  if (ctx.tabelas.erros_app && ctx.tabelas.erros_app.ok) {
+    try {
+      const desde = new Date(Date.now() - 864e5).toISOString();
+      const r = await sb.from('erros_app').select('id,criado_em,usuario,pagina,origem,mensagem', { count: 'exact' }).gte('criado_em', desde).order('criado_em', { ascending: false }).limit(20);
+      if (!r.error) { ctx.errosApp24h = r.count != null ? r.count : (r.data || []).length; _sh.erros = r.data || []; }
+    } catch (e) { /* mantém null */ }
+  }
+  if (ctx.tabelas.saude_sistema && ctx.tabelas.saude_sistema.ok) {
+    try {
+      const r = await sb.from('saude_sistema').select('id,atualizado_em');
+      (r.data || []).forEach(x => { if (x.id === 'robo') ctx.robo = x.atualizado_em; if (x.id === 'servidor') ctx.servidor = x.atualizado_em; });
+    } catch (e) { /* ignora */ }
+  }
+  return ctx;
+}
+
+async function shExecutar(manual) {
+  if (_sh.rodando) return; _sh.rodando = true; shRender();
+  try {
+    const ctx = await shColetar();
+    _sh.lista = shAvaliar(ctx); _sh.quando = new Date(); _sh.robo = ctx.robo; _sh.servidor = ctx.servidor;
+    if (_usuarioAtual && ctx.tabelas.saude_sistema && ctx.tabelas.saude_sistema.ok) {
+      sb.from('saude_sistema').upsert({ id: 'app', resultado: { lista: _sh.lista, resumo: shResumo(_sh.lista) }, atualizado_por: _usuarioAtual.id, atualizado_em: new Date().toISOString() }, { onConflict: 'id' }).then(() => {}, () => {});
+    }
+    if (manual) { const r = shResumo(_sh.lista); mostrarToast(r.erro || r.aviso ? `Verificação: ${r.erro} erro(s), ${r.aviso} atenção` : 'Verificação concluída: tudo certo', r.erro ? 'erro' : 'ok'); }
+  } catch (e) { console.warn('Verificação de saúde falhou:', e); if (manual) mostrarToast('Não consegui verificar agora (internet?)', 'erro'); }
+  _sh.rodando = false; shRender();
+}
+
+function shRender() {
+  const r = shResumo(_sh.lista); const grave = r.erro + r.aviso;
+  const badge = document.getElementById('sh-badge');
+  if (badge) { badge.textContent = grave ? ' ' + grave : ''; badge.style.cssText = grave ? `background:${r.erro ? '#B91C1C' : '#B45309'};color:#fff;border-radius:9px;padding:0 6px;font-size:10px;margin-left:4px` : ''; }
+  const el = document.getElementById('sh-painel'); if (!el) return;
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const titulo = !_sh.quando ? 'Ainda não verificado' : r.erro ? `${r.erro} erro(s) e ${r.aviso} ponto(s) de atenção` : r.aviso ? `${r.aviso} ponto(s) de atenção` : 'Tudo certo';
+  let h = `<div style="border:1px solid var(--border);border-left:4px solid ${SH_COR[_sh.quando ? r.nivel : 'info']};border-radius:8px;padding:10px 14px;background:#fff;margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><strong style="font-size:14px">${titulo}</strong>
+    <button class="btn btn-ghost" style="margin-left:auto;padding:2px 10px;font-size:11px" onclick="shExecutar(true)" ${_sh.rodando ? 'disabled' : ''}>${_sh.rodando ? 'Verificando…' : '↻ Verificar agora'}</button></div>
+    <div style="font-size:11px;color:var(--text-2);margin-top:4px">${_sh.quando ? 'Última verificação desta tela: ' + _sh.quando.toLocaleString('pt-BR') : ''}${_sh.servidor ? ' · Servidor: ' + new Date(_sh.servidor).toLocaleString('pt-BR') : ''}${_sh.robo ? ' · Robô (última importação): ' + new Date(_sh.robo).toLocaleString('pt-BR') : ''}. A verificação roda sozinha a cada hora enquanto a Central está aberta.</div></div>`;
+  _sh.lista.forEach(i => {
+    h += `<div style="display:flex;gap:10px;padding:6px 4px;border-bottom:1px solid var(--border);font-size:12px"><span style="color:${SH_COR[i.nivel]};font-weight:700;min-width:64px">${SH_ROTULO[i.nivel]}</span><div style="flex:1"><div style="font-weight:600">${esc(i.titulo)}</div>${i.detalhe ? `<div style="color:var(--text-2);font-size:11px;margin-top:2px">${esc(i.detalhe)}</div>` : ''}</div></div>`;
+  });
+  if (_sh.erros.length) {
+    h += `<h4 style="margin:18px 0 6px;font-size:12px">Erros de tela nas últimas 24 h (últimos ${_sh.erros.length})</h4><div class="tbl-wrap"><table class="fd-tbl" style="font-size:11px;white-space:normal"><thead><tr><th>Quando</th><th>Quem</th><th>Tela</th><th>Erro</th></tr></thead><tbody>`;
+    _sh.erros.forEach(e => { h += `<tr><td style="text-align:left">${new Date(e.criado_em).toLocaleString('pt-BR')}</td><td style="text-align:left">${esc(e.usuario)}</td><td style="text-align:left">${esc(e.pagina)}</td><td style="text-align:left">${esc(e.mensagem)}</td></tr>`; });
+    h += '</tbody></table></div>';
+  }
+  h += '<div style="font-size:10px;color:var(--text-2);margin-top:12px">Estas verificações são sinais para conferir, não correções automáticas: o sistema não altera nenhum dado sozinho.</div>';
+  el.innerHTML = h;
+}
+
+function shIniciar() { // chamado uma vez depois do login e do primeiro carregamento
+  if (_sh.iniciado) return; _sh.iniciado = true;
+  setTimeout(() => shExecutar(false), 20000);
+  setInterval(() => { if (_usuarioAtual) shExecutar(false); }, 3600000);
+}
+
 // ── Digitação ──
 function fdSalvarCampo(el) {
   if (_fdLoja === 'GRUPO') return;
@@ -8301,6 +8493,7 @@ async function iniciarAppMultiusuario() {
     await carregarReclamacoesElogiosSupabase();
   await carregarFechamentoSupabase();
   fdAtualizarAlertas(true);
+  try { shIniciar(); } catch(e) { console.warn(e); }
   try { renderFluxo('projetado'); } catch(e) { console.warn(e); }
   try { renderCalendario(); } catch(e) { console.warn(e); }
   try { renderTermometroFolha(); renderRankingSemanal(); renderMensagemGrupo(); } catch(e) { console.warn(e); }
