@@ -40,11 +40,17 @@ if (typeof XLSX === 'undefined') {
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Inter',sans-serif;background:var(--ivory);color:var(--ink);font-size:13px;line-height:1.5}
-nav{background:var(--navy);height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:300;box-shadow:0 1px 0 rgba(201,168,76,.2)}
+nav{background:var(--navy);min-height:52px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:300;box-shadow:0 1px 0 rgba(201,168,76,.2),0 2px 6px rgba(0,0,0,.12)}
 .nav-brand{font-family:'Playfair Display',serif;color:var(--gold);font-size:15px;font-weight:700;white-space:nowrap}
 .nav-brand em{font-style:normal;font-size:9px;color:rgba(255,255,255,.3);display:block;letter-spacing:2px;text-transform:uppercase}
-.nav-tabs{display:flex;gap:1px;overflow-x:auto;scrollbar-width:none}
-.nav-tabs::-webkit-scrollbar{display:none}
+/* Abas em uma segunda linha branca, quebrando em várias linhas: todas ficam visíveis, sem rolagem lateral */
+.nav-brand{order:1;padding:6px 0}
+nav>div:last-of-type{order:2}
+.nav-tabs{order:3;display:flex;flex-wrap:wrap;gap:2px;width:calc(100% + 40px);margin:0 -20px;padding:0 20px;background:#fff;border-top:1px solid rgba(201,168,76,.35)}
+.nav-tabs .ntab{color:#475569;padding:9px 11px;border-radius:4px 4px 0 0;border-bottom:2px solid transparent}
+.nav-tabs .ntab:hover{color:var(--navy);background:rgba(201,168,76,.12)}
+.nav-tabs .ntab.active{color:var(--navy);background:rgba(201,168,76,.18);border-bottom:2px solid var(--gold)}
+.nav-tabs #ntab-hub{border-left:1px solid #cbd5e1!important}
 .ntab{background:none;border:none;color:rgba(255,255,255,.4);font-size:10px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;padding:6px 10px;border-radius:4px 4px 0 0;cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0}
 .ntab:hover{color:var(--gold2);background:rgba(201,168,76,.08)}
 .ntab.active{color:var(--gold);background:rgba(201,168,76,.14);border-bottom:2px solid var(--gold)}
