@@ -1,0 +1,13 @@
+{
+  "name": "Elohim Financeiro",
+  "short_name": "Elohim Fin.",
+  "start_url": "/central-financeira.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#1F4A56",
+  "theme_color": "#3F6E7E",
+  "icons": [
+    {"src": "/icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}
+  ]
+}
