@@ -24,51 +24,59 @@ if (typeof XLSX === 'undefined') {
 }
 </script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap');
 :root{
-  --navy:#0D1B2A;--gold:#C9A84C;--gold2:#E8C97A;--gold-bg:#F7EDD5;
-  --ivory:#FAFAF8;--white:#FFFFFF;--slate:#6B7280;--border:#E5E7EB;--ink:#111827;
-  --green:#065F46;--green-bg:#D1FAE5;--green2:#10B981;
-  --red:#991B1B;--red-bg:#FEE2E2;--red2:#EF4444;
-  --amber:#92400E;--amber-bg:#FEF3C7;--amber2:#F59E0B;
-  --blue:#1E40AF;--blue-bg:#DBEAFE;--blue2:#3B82F6;
-  --purple:#5B21B6;--purple-bg:#EDE9FE;
-  --caixa:#006B3F;--caixa-bg:#D1FAE5;
-  --unicred:#00529B;--unicred-bg:#DBEAFE;
-  --teal:#0D7377;--teal-bg:#CCFBF1;
+  --navy:#26343F;            /* texto escuro (suave, sem preto puro) */
+  --hdr:#3F6E7E;             /* barra e botões: azul-petróleo calmo */
+  --on-hdr:#FFF1CC;          /* texto creme sobre a barra */
+  --gold:#9C6A10;            /* destaque âmbar (texto sobre fundo claro) */
+  --gold2:#E9C46A;
+  --gold-soft:#F4DDA0;       /* fundo âmbar pastel */
+  --gold-line:#E3C27A;       /* bordas âmbar suaves */
+  --gold-bg:#FBF1D9;
+  --ivory:#F3F7F6;           /* fundo: névoa verde-azulada */
+  --white:#FFFFFF;--slate:#5E7080;--border:#DCE6E4;--ink:#26343F;--text-2:#4B6070;
+  --green:#1F7A5C;--green-bg:#DDF3E8;--green2:#2E9E78;
+  --red:#A83B3B;--red-bg:#FBE4E2;--red2:#D9534F;
+  --amber:#85560F;--amber-bg:#FCF0CF;--amber2:#E0A030;
+  --blue:#2C5A9A;--blue-bg:#E0ECF8;--blue2:#4A86C8;
+  --purple:#5B3FA0;--purple-bg:#EAE6F7;
+  --caixa:#1F7A5C;--caixa-bg:#DDF3E8;
+  --unicred:#2C5A9A;--unicred-bg:#E0ECF8;
+  --teal:#2A7F83;--teal-bg:#D8F2EE;
   --mono:'IBM Plex Mono',monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Inter',sans-serif;background:var(--ivory);color:var(--ink);font-size:13px;line-height:1.5}
-nav{background:var(--navy);min-height:52px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:300;box-shadow:0 1px 0 rgba(201,168,76,.2),0 2px 6px rgba(0,0,0,.12)}
-.nav-brand{font-family:'Playfair Display',serif;color:var(--gold);font-size:15px;font-weight:700;white-space:nowrap}
-.nav-brand em{font-style:normal;font-size:9px;color:rgba(255,255,255,.3);display:block;letter-spacing:2px;text-transform:uppercase}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--ivory);color:var(--ink);font-size:13.5px;line-height:1.5}
+nav{background:var(--hdr);min-height:52px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:300;box-shadow:0 1px 0 rgba(201,168,76,.2),0 2px 6px rgba(0,0,0,.12)}
+.nav-brand{font-family:'Plus Jakarta Sans',sans-serif;color:var(--on-hdr);font-size:15px;font-weight:700;white-space:nowrap}
+.nav-brand em{font-style:normal;font-size:9px;color:rgba(255,255,255,.72);display:block;letter-spacing:2px;text-transform:uppercase}
 /* Abas em uma segunda linha branca, quebrando em várias linhas: todas ficam visíveis, sem rolagem lateral */
 .nav-brand{order:1;padding:6px 0}
 nav>div:last-of-type{order:2}
 .nav-tabs{order:3;display:flex;flex-wrap:wrap;gap:2px;width:calc(100% + 40px);margin:0 -20px;padding:0 20px;background:#fff;border-top:1px solid rgba(201,168,76,.35)}
 .nav-tabs .ntab{color:#475569;padding:9px 11px;border-radius:4px 4px 0 0;border-bottom:2px solid transparent}
 .nav-tabs .ntab:hover{color:var(--navy);background:rgba(201,168,76,.12)}
-.nav-tabs .ntab.active{color:var(--navy);background:rgba(201,168,76,.18);border-bottom:2px solid var(--gold)}
+.nav-tabs .ntab.active{color:var(--navy);background:rgba(201,168,76,.18);border-bottom:2px solid var(--gold-line)}
 .nav-tabs #ntab-hub{border-left:1px solid #cbd5e1!important}
 .ntab{background:none;border:none;color:rgba(255,255,255,.4);font-size:10px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;padding:6px 10px;border-radius:4px 4px 0 0;cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0}
 .ntab:hover{color:var(--gold2);background:rgba(201,168,76,.08)}
-.ntab.active{color:var(--gold);background:rgba(201,168,76,.14);border-bottom:2px solid var(--gold)}
+.ntab.active{color:var(--gold);background:rgba(201,168,76,.14);border-bottom:2px solid var(--gold-line)}
 .page{display:none;max-width:1200px;margin:0 auto;padding:24px 20px}
 .page.active{display:block}
-.hero{background:linear-gradient(135deg,var(--navy) 0%,#1a2f47 100%);color:#fff;border-radius:12px;padding:32px;margin-bottom:20px;position:relative;overflow:hidden}
+.hero{background:linear-gradient(135deg,var(--hdr) 0%,#5C8A98 100%);color:#fff;border-radius:12px;padding:32px;margin-bottom:20px;position:relative;overflow:hidden}
 .hero::before{content:'✦';position:absolute;right:28px;top:16px;font-size:56px;color:rgba(201,168,76,.1)}
-.hero-eye{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:3px;color:var(--gold);margin-bottom:7px}
-.hero h1{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;line-height:1.2;margin-bottom:7px}
-.hero p{color:rgba(255,255,255,.55);font-size:12px;max-width:520px}
+.hero-eye{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:3px;color:var(--on-hdr);margin-bottom:7px}
+.hero h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:24px;font-weight:700;line-height:1.2;margin-bottom:7px}
+.hero p{color:rgba(255,255,255,.88);font-size:12px;max-width:520px}
 .sh{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
-.sh-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--navy)}
+.sh-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:17px;font-weight:700;color:var(--navy)}
 .sh-sub{font-size:11px;color:var(--slate)}
 .sh-rule{flex:1;height:1px;background:var(--border)}
 .divider{border:none;border-top:1px solid var(--border);margin:20px 0}
 .upload-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:16px}
 .uz{border:2px dashed var(--border);border-radius:10px;padding:20px 16px;text-align:center;cursor:pointer;transition:all .18s;background:var(--white);position:relative}
-.uz:hover,.uz.drag{border-color:var(--gold);background:var(--gold-bg)}
+.uz:hover,.uz.drag{border-color:var(--gold-line);background:var(--gold-bg)}
 .uz.loaded{border-color:var(--green2);border-style:solid;background:var(--green-bg)}
 .uz input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .uz-icon{font-size:26px;margin-bottom:8px}
@@ -76,14 +84,14 @@ nav>div:last-of-type{order:2}
 .uz-sub{font-size:10px;color:var(--slate)}
 .uz-st{font-size:10px;font-weight:600;margin-top:6px}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:7px;border:none;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;letter-spacing:.3px}
-.btn-primary{background:var(--navy);color:var(--gold)}
-.btn-primary:hover{background:#1a2f47}
+.btn-primary{background:var(--hdr);color:var(--on-hdr)}
+.btn-primary:hover{background:#2F5967}
 .btn-primary:disabled{opacity:.35;cursor:default}
-.btn-gold{background:var(--gold);color:var(--navy)}
+.btn-gold{background:var(--gold-soft);color:var(--navy)}
 .btn-gold:hover{background:var(--gold2)}
 .btn-ghost{background:var(--white);color:var(--navy);border:1.5px solid var(--border)}
-.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
-.btn-red{background:var(--red-bg);color:var(--red);border:1px solid #FCA5A5}
+.btn-ghost:hover{border-color:var(--gold-line);color:var(--gold)}
+.btn-red{background:var(--red-bg);color:var(--red);border:1px solid #F0B3AE}
 .kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
 .kpi{background:var(--white);border:1px solid var(--border);border-radius:9px;padding:14px 12px;border-top:3px solid var(--border)}
 .kpi.kg{border-top-color:var(--green2)}.kpi.kr{border-top-color:var(--red2)}.kpi.ka{border-top-color:var(--amber2)}.kpi.kb{border-top-color:var(--blue2)}.kpi.kn{border-top-color:var(--navy)}.kpi.kp{border-top-color:#8B5CF6}
@@ -96,10 +104,10 @@ nav>div:last-of-type{order:2}
 .tbl-title{font-size:12px;font-weight:700;color:var(--navy)}
 .tbl-ct{font-size:10px;color:var(--slate);background:var(--ivory);padding:2px 7px;border-radius:8px}
 table{width:100%;border-collapse:collapse;font-size:11px}
-th{background:var(--navy);color:var(--gold);padding:8px 11px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;white-space:nowrap}
+th{background:var(--hdr);color:var(--on-hdr);padding:8px 11px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;white-space:nowrap}
 td{padding:8px 11px;border-bottom:1px solid var(--border);vertical-align:middle}
 tr:last-child td{border-bottom:none}
-tr:hover td{background:#FAFAF0}
+tr:hover td{background:#EEF6F4}
 .mono{font-family:var(--mono)}
 .badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
 .bok{background:var(--green-bg);color:var(--green)}
@@ -113,24 +121,24 @@ tr:hover td{background:#FAFAF0}
 .ag{background:var(--green-bg);border-left:3px solid var(--green2);color:var(--green)}
 .aa{background:var(--amber-bg);border-left:3px solid var(--amber2);color:var(--amber)}
 .ab{background:var(--blue-bg);border-left:3px solid var(--blue2);color:var(--blue)}
-.an{background:#EEF2FF;border-left:3px solid var(--navy);color:var(--navy)}
+.an{background:#E8EEF6;border-left:3px solid var(--navy);color:var(--navy)}
 .aicon{font-size:14px;flex-shrink:0}
 .prog{background:var(--border);border-radius:3px;height:6px;overflow:hidden}
 .prog-fill{height:100%;border-radius:3px;transition:width .5s}
 .cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:16px}
 .card{background:var(--white);border:1px solid var(--border);border-radius:9px;padding:18px}
 .card.cg{border-top:3px solid var(--green2)}.card.cr{border-top:3px solid var(--red2)}.card.ca{border-top:3px solid var(--amber2)}.card.cb{border-top:3px solid var(--blue2)}.card.cn{border-top:3px solid var(--navy)}
-.card h4{font-family:'Playfair Display',serif;font-size:14px;color:var(--navy);margin-bottom:5px;font-weight:700}
+.card h4{font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;color:var(--navy);margin-bottom:5px;font-weight:700}
 .card p{font-size:11px;color:var(--slate);line-height:1.7}
 .ctag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;display:block}
 .fbar{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
 .fbar select,.fbar input{padding:6px 10px;border:1.5px solid var(--border);border-radius:6px;font-size:11px;background:var(--white);color:var(--ink);outline:none}
-.fbar select:focus,.fbar input:focus{border-color:var(--gold)}
+.fbar select:focus,.fbar input:focus{border-color:var(--gold-line)}
 .dre-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:16px}
 .dre-card{background:var(--white);border:1px solid var(--border);border-radius:9px;overflow:hidden}
-.dre-hdr{background:var(--navy);color:var(--gold);padding:12px 15px}
-.dre-hdr h4{font-family:'Playfair Display',serif;font-size:14px;font-weight:700}
-.dre-hdr small{display:block;color:rgba(255,255,255,.35);font-family:'Inter',sans-serif;font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.dre-hdr{background:var(--hdr);color:var(--on-hdr);padding:12px 15px}
+.dre-hdr h4{font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700}
+.dre-hdr small{display:block;color:rgba(255,255,255,.35);font-family:'Plus Jakarta Sans',sans-serif;font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
 .dre-row{display:flex;justify-content:space-between;padding:7px 15px;border-bottom:1px solid var(--border);font-size:11px}
 .dre-row:last-child{border-bottom:none}
 .dre-row.total{background:var(--gold-bg);font-weight:700;font-size:12px}
@@ -138,17 +146,17 @@ tr:hover td{background:#FAFAF0}
 .dre-lbl{color:var(--slate)}.dre-val{font-family:var(--mono);font-weight:600}
 .fluxo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:16px}
 .fluxo-col{background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:hidden}
-.fluxo-hdr{background:var(--navy);color:var(--gold);text-align:center;padding:8px;font-size:10px;font-weight:700}
+.fluxo-hdr{background:var(--hdr);color:var(--on-hdr);text-align:center;padding:8px;font-size:10px;font-weight:700}
 .fluxo-body{padding:10px 8px}
 .fluxo-row{display:flex;justify-content:space-between;font-size:10px;padding:3px 0;border-bottom:1px solid var(--border)}
 .fluxo-row:last-child{border-bottom:none}
 .fluxo-total{text-align:center;font-family:var(--mono);font-size:14px;font-weight:700;padding:8px;border-top:2px solid var(--border)}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:16px}
-.cal-hdr{background:var(--navy);color:var(--gold);text-align:center;padding:6px;font-size:9px;font-weight:700;border-radius:4px}
+.cal-hdr{background:var(--hdr);color:var(--on-hdr);text-align:center;padding:6px;font-size:9px;font-weight:700;border-radius:4px}
 .cal-day{background:var(--white);border:1px solid var(--border);border-radius:6px;min-height:64px;padding:5px;cursor:pointer;transition:all .15s}
-.cal-day:hover{border-color:var(--gold)}
+.cal-day:hover{border-color:var(--gold-line)}
 .cal-day.empty{background:transparent;border-color:transparent;cursor:default}
-.cal-day.today{border-color:var(--gold);border-width:2px}
+.cal-day.today{border-color:var(--gold-line);border-width:2px}
 .cal-num{font-size:10px;font-weight:700;color:var(--slate);margin-bottom:3px}
 .cal-evt{font-size:9px;padding:2px 4px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cal-pago{background:var(--green-bg);color:var(--green)}
@@ -168,37 +176,56 @@ tr:hover td{background:#FAFAF0}
 .chart-lbl{font-size:8px;color:var(--slate);margin-top:3px;text-align:center}
 .chart-val{font-size:8px;font-weight:600;margin-bottom:2px;text-align:center}
 .chart-wrap{background:var(--white);border:1px solid var(--border);border-radius:9px;padding:16px;margin-bottom:16px}
-.chart-title{font-family:'Playfair Display',serif;font-size:13px;color:var(--navy);margin-bottom:12px;font-weight:700}
+.chart-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;color:var(--navy);margin-bottom:12px;font-weight:700}
 input[type=number],input[type=text],input[type=date],select,textarea{
   padding:7px 10px;border:1.5px solid var(--border);border-radius:6px;font-size:11px;
-  background:var(--white);color:var(--ink);outline:none;font-family:'Inter',sans-serif;width:100%}
-input:focus,select:focus,textarea:focus{border-color:var(--gold)}
+  background:var(--white);color:var(--ink);outline:none;font-family:'Plus Jakarta Sans',sans-serif;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--gold-line)}
 .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:12px}
 .form-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--slate);margin-bottom:4px;display:block}
 .itabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
 .itab{padding:5px 12px;border-radius:14px;border:1.5px solid var(--border);background:var(--white);cursor:pointer;font-size:11px;font-weight:600;color:var(--slate);transition:all .15s}
-.itab:hover{border-color:var(--gold);color:var(--gold)}
-.itab.active{border-color:var(--gold);background:var(--gold);color:var(--navy)}
+.itab:hover{border-color:var(--gold-line);color:var(--gold)}
+.itab.active{border-color:var(--gold-line);background:var(--gold-soft);color:var(--navy)}
 [title]{cursor:help}
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center}
 .modal-bg.open{display:flex}
 .modal{background:var(--white);border-radius:12px;padding:28px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto}
-.modal h3{font-family:'Playfair Display',serif;font-size:18px;color:var(--navy);margin-bottom:16px;font-weight:700}
+.modal h3{font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;color:var(--navy);margin-bottom:16px;font-weight:700}
 .modal-close{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:var(--slate)}
 @media(max-width:768px){
   nav{padding:0 12px}.kpi-row{grid-template-columns:repeat(2,1fr)}.page{padding:16px 12px}
   .ntab{padding:5px 8px;font-size:9px}
 }
+
+/* ── Visual suave (pastel) ── */
+body{-webkit-font-smoothing:antialiased;letter-spacing:.005em}
+h1,h2,h3,h4,.sh-title,.hero h1{letter-spacing:-.01em}
+td,.kpi-v,.dre-val,.fluxo-total,.fluxo-row{font-variant-numeric:tabular-nums}
+.card,.kpi,.tbl-wrap,.dre-card,.fluxo-col,.chart-wrap{border-radius:14px;border-color:var(--border);box-shadow:0 1px 2px rgba(50,85,100,.06),0 6px 18px rgba(50,85,100,.05)}
+.hero{border-radius:16px}
+.uz{border-radius:14px}
+.btn{border-radius:10px;font-weight:700}
+input[type=number],input[type=text],input[type=date],select,textarea,.fbar select,.fbar input{border-radius:9px;font-size:12px}
+input:focus,select:focus,textarea:focus,.fbar select:focus,.fbar input:focus{border-color:var(--hdr);box-shadow:0 0 0 3px rgba(63,110,126,.15)}
+th{background:#E4EEF0;color:#3A5666;font-size:9.5px}
+.dre-hdr,.fluxo-hdr,.cal-hdr{background:#E4EEF0;color:#2F4B5A}
+.dre-hdr h4{color:#2F4B5A}
+.dre-hdr small{color:#6B8392}
+.alert{border-radius:10px}
+.modal{border-radius:16px}
+.kpi.kn{border-top-color:var(--hdr)}.card.cn{border-top-color:var(--hdr)}
+.ntab{border-radius:8px 8px 0 0}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
 <!-- ██ LOGIN — GATE MULTIUSUÁRIO (Supabase) ██ -->
-<div id="login-overlay" style="position:fixed;inset:0;background:var(--navy);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px">
+<div id="login-overlay" style="position:fixed;inset:0;background:var(--hdr);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px">
   <div style="background:#fff;border-radius:14px;padding:36px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.4)">
     <div style="text-align:center;margin-bottom:24px">
-      <div style="font-family:'Playfair Display',serif;color:var(--gold);font-size:24px;font-weight:700">ELOHIM</div>
+      <div style="font-family:'Plus Jakarta Sans',sans-serif;color:var(--gold);font-size:24px;font-weight:700">ELOHIM</div>
       <div style="font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--slate);margin-top:2px">Central Financeira Pro</div>
     </div>
     <label style="font-size:11px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px">E-mail</label>
@@ -210,13 +237,13 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold)}
       onkeydown="if(event.key==='Enter')fazerLoginSupabase()">
     <div id="login-erro" style="font-size:11px;color:var(--red);margin-bottom:10px;min-height:14px"></div>
     <button onclick="fazerLoginSupabase()" id="login-btn"
-      style="width:100%;padding:11px;background:var(--gold);color:var(--navy);border:none;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer">Entrar</button>
+      style="width:100%;padding:11px;background:var(--gold-soft);color:var(--navy);border:none;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer">Entrar</button>
     <div id="login-carregando" style="display:none;text-align:center;font-size:11px;color:var(--slate);margin-top:12px">Conectando...</div>
   </div>
 </div>
 
 <nav>
-  <div class="nav-brand">ELOHIM <em>Central Financeira Pro</em> <span style="font-size:8px;color:rgba(255,255,255,.25);text-transform:none;letter-spacing:0">v2026-08-05-sync</span></div>
+  <div class="nav-brand">ELOHIM <em>Central Financeira Pro</em> <span style="font-size:8px;color:rgba(255,255,255,.6);text-transform:none;letter-spacing:0">v2026-08-05-sync</span></div>
   <div class="nav-tabs">
     <button class="ntab active" onclick="showPage('dashboard',this)" data-central="financeira" style="display:none">Dashboard</button>
     <button class="ntab" onclick="showPage('conferencia',this)" data-central="financeira" style="display:none">Conferência</button>
@@ -238,8 +265,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold)}
   </div>
   <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;padding-left:10px">
     <span id="sync-status-badge" style="font-size:10px;white-space:nowrap;font-weight:600"></span>
-    <span id="usuario-logado-badge" style="font-size:10px;color:rgba(255,255,255,.5);white-space:nowrap"></span>
-    <button onclick="sairSupabase()" style="background:none;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.6);font-size:9px;padding:4px 8px;border-radius:4px;cursor:pointer;white-space:nowrap">Sair</button>
+    <span id="usuario-logado-badge" style="font-size:10px;color:rgba(255,255,255,.85);white-space:nowrap"></span>
+    <button onclick="sairSupabase()" style="background:none;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.9);font-size:9px;padding:4px 8px;border-radius:4px;cursor:pointer;white-space:nowrap">Sair</button>
   </div>
 </nav>
 
@@ -250,12 +277,12 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold)}
     <h1 style="font-size:26px;color:var(--navy);margin-bottom:6px">Qual central você quer abrir?</h1>
     <p style="color:var(--slate);font-size:13px;margin-bottom:28px">Escolha um ambiente — dá pra trocar a qualquer momento pelo botão "🏠 Trocar Central" no topo.</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-      <div onclick="entrarCentral('financeira')" style="cursor:pointer;background:var(--navy);border-radius:12px;padding:32px 20px;transition:transform .15s" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+      <div onclick="entrarCentral('financeira')" style="cursor:pointer;background:var(--hdr);border-radius:12px;padding:32px 20px;transition:transform .15s" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
         <div style="font-size:40px;margin-bottom:10px">💰</div>
         <div style="font-size:17px;font-weight:800;color:#fff;margin-bottom:6px">Central Financeira</div>
         <div style="font-size:11px;color:rgba(255,255,255,.6)">Dashboard, Conciliação, DRE, Fluxo de Caixa, Termômetro de Folha, CMV, Orçamento, KPIs</div>
       </div>
-      <div onclick="entrarCentral('rh')" style="cursor:pointer;background:var(--gold);border-radius:12px;padding:32px 20px;transition:transform .15s" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+      <div onclick="entrarCentral('rh')" style="cursor:pointer;background:var(--gold-soft);border-radius:12px;padding:32px 20px;transition:transform .15s" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
         <div style="font-size:40px;margin-bottom:10px">👥</div>
         <div style="font-size:17px;font-weight:800;color:var(--navy);margin-bottom:6px">Central RH &amp; Performance</div>
         <div style="font-size:11px;color:rgba(27,42,74,.75)">Meta Gerentes, Copa Elohim, Ponto, Horas Extras, Auditoria CLT, Produtividade</div>
@@ -272,8 +299,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold)}
     <p>Visão consolidada em tempo real. Importe os arquivos nas abas Conferência e DRE para ativar todos os indicadores.</p>
   </div>
   <div id="fd-alerta-dash"></div>
-  <div class="tbl-wrap" id="painel-termometro-folha" style="margin-bottom:16px;border-top:3px solid var(--gold)"></div>
-  <div class="tbl-wrap" id="painel-ranking-semanal" style="margin-bottom:16px;border-top:3px solid var(--gold)"></div>
+  <div class="tbl-wrap" id="painel-termometro-folha" style="margin-bottom:16px;border-top:3px solid var(--gold-line)"></div>
+  <div class="tbl-wrap" id="painel-ranking-semanal" style="margin-bottom:16px;border-top:3px solid var(--gold-line)"></div>
 
   <div class="kpi-row" id="dash-kpis">
     <div class="kpi kn"><div class="kpi-l">Receita do Grupo</div><div class="kpi-v" id="dk-rec">—</div><div class="kpi-m">período importado</div></div>
@@ -300,7 +327,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold)}
   <div id="painel-fechamento-mensal" style="display:none;background:linear-gradient(135deg,#7C2D12,#991B1B);border-radius:12px;padding:20px 24px;margin-top:8px;margin-bottom:8px">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
       <div>
-        <div style="font-family:'Playfair Display',serif;color:#FCA5A5;font-size:16px;font-weight:700;margin-bottom:4px">📅 É o início do mês — hora do fechamento!</div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;color:#FCA5A5;font-size:16px;font-weight:700;margin-bottom:4px">📅 É o início do mês — hora do fechamento!</div>
         <div style="font-size:12px;color:rgba(255,255,255,.7);max-width:500px">
           Hoje é dia <strong id="alerta-dia-mes" style="color:#fff"></strong>. Está na hora de importar os extratos bancários e o DRE do mês anterior, executar a conferência e salvar o histórico completo.
         </div>
@@ -312,22 +339,22 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold)}
     </div>
   </div>
 
-  <div style="background:var(--navy);border-radius:12px;padding:20px 24px;margin-top:8px">
+  <div style="background:#2B4D5C;border-radius:14px;padding:20px 24px;margin-top:8px">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px">
 
       <div style="flex:1;min-width:220px">
-        <div style="font-family:'Playfair Display',serif;color:var(--gold);font-size:15px;font-weight:700;margin-bottom:4px">💾 Dados Salvos Automaticamente</div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;color:var(--gold);font-size:15px;font-weight:700;margin-bottom:4px">💾 Dados Salvos Automaticamente</div>
         <div style="font-size:11px;color:rgba(255,255,255,.45);line-height:1.6">Orçamentos, lançamentos, DRE e divergências são salvos no navegador e restaurados a cada abertura.<br><span style="color:rgba(255,255,255,.25)">Backup recomendado: todo dia 1º do mês.</span></div>
       </div>
 
       <div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0">
-        <button class="btn" onclick="exportarHistoricoCompleto()" style="background:var(--gold);color:var(--navy);font-size:12px;padding:10px 18px;justify-content:center">
+        <button class="btn" onclick="exportarHistoricoCompleto()" style="background:var(--gold-soft);color:var(--navy);font-size:12px;padding:10px 18px;justify-content:center">
           📊 Exportar Histórico Completo (.xlsx)
         </button>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <button class="btn" style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.2);font-size:10px" onclick="exportarBackup()">📦 Backup JSON</button>
           <button class="btn" style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.2);font-size:10px" onclick="importarBackup()">📂 Restaurar JSON</button>
-          <button class="btn" style="background:var(--red-bg);color:var(--red);border:1px solid #FCA5A5;font-size:10px" onclick="limparTodos()">🗑 Limpar</button>
+          <button class="btn" style="background:var(--red-bg);color:var(--red);border:1px solid #F0B3AE;font-size:10px" onclick="limparTodos()">🗑 Limpar</button>
         </div>
         <div style="font-size:9px;color:rgba(255,255,255,.2);text-align:right">Último backup: <span id="dash-ultimo-backup">nunca</span></div>
       </div>
@@ -541,7 +568,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold)}
       <div class="form-row" style="margin-bottom:10px">
         <div>
           <label class="form-label">Nome da Loja <span style="color:var(--red)">*</span></label>
-          <select id="dre-import-loja" style="width:100%;padding:7px 10px;border:1.5px solid var(--gold);border-radius:6px;font-size:11px;font-weight:700;background:var(--gold-bg)">
+          <select id="dre-import-loja" style="width:100%;padding:7px 10px;border:1.5px solid var(--gold-line);border-radius:6px;font-size:11px;font-weight:700;background:var(--gold-bg)">
             <option value="">— Selecione a loja —</option>
             <option value="EFATA">EFATA</option>
             <option value="JEFTE">JEFTE</option>
@@ -553,7 +580,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold)}
             <option value="SHADDAI">SHADDAI</option>
             <option value="KADOSH">KADOSH</option>
             <option value="SHAMMAH">SHAMMAH</option>
-            <option value="GRUPO ELOHIM" style="font-weight:700;background:var(--navy);color:var(--gold)">🏢 GRUPO ELOHIM (Escritório/Holding)</option>
+            <option value="GRUPO ELOHIM" style="font-weight:700;background:var(--hdr);color:var(--on-hdr)">🏢 GRUPO ELOHIM (Escritório/Holding)</option>
           </select>
         </div>
       </div>
@@ -642,7 +669,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold)}
     <button class="btn btn-ghost" onclick="exportarFluxoExcel()" style="font-size:10px;margin-left:4px">📊 Excel</button>
   </div>
 
-  <div class="tbl-wrap" style="margin-bottom:16px;border-top:3px solid var(--gold)">
+  <div class="tbl-wrap" style="margin-bottom:16px;border-top:3px solid var(--gold-line)">
     <div class="tbl-head">
       <span class="tbl-title">💰 Caixa do Dia</span>
       <span style="font-size:10px;color:var(--slate)">Informe o saldo real dos bancos e os recebimentos previstos de hoje</span>
@@ -650,7 +677,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold)}
 
     <div style="padding:12px 14px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
       <label class="form-label" style="margin:0;color:var(--navy)">🏬 Visualizar:</label>
-      <select id="cx-loja-sel" onchange="trocarLojaCaixaDia()" style="max-width:280px;padding:7px 10px;border:1.5px solid var(--gold);border-radius:6px;font-size:12px;font-weight:700;background:var(--gold-bg)">
+      <select id="cx-loja-sel" onchange="trocarLojaCaixaDia()" style="max-width:280px;padding:7px 10px;border:1.5px solid var(--gold-line);border-radius:6px;font-size:12px;font-weight:700;background:var(--gold-bg)">
         <option value="GRUPO">🏢 Grupo (Consolidado)</option>
         <option value="EFATA">EFATA</option><option value="JEFTE">JEFTE</option>
         <option value="SHEKINAH">SHEKINAH</option><option value="YANNIS">YANNIS</option>
@@ -785,7 +812,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold)}
     <h1>Central RH<br>Gente, Metas e Conformidade</h1>
     <p>Meta Gerentes, Copa Elohim, Assiduidade, Horas Extras e Auditoria Trabalhista — tudo que envolve equipe, separado do fluxo de caixa.</p>
   </div>
-  <div class="tbl-wrap" id="painel-msg-grupo" style="margin-bottom:16px;border-top:3px solid var(--gold)"></div>
+  <div class="tbl-wrap" id="painel-msg-grupo" style="margin-bottom:16px;border-top:3px solid var(--gold-line)"></div>
 
   <div class="itabs">
     <button class="itab active" onclick="showRH('metagerentes',this)">🏆 Meta Gerentes 2026</button>
@@ -885,11 +912,11 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold)}
     .fd-scroll{overflow:auto;max-height:70vh}
     .fd-tbl{border-collapse:separate;border-spacing:0;font-size:11px;white-space:nowrap}
     .fd-tbl th,.fd-tbl td{padding:2px 5px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);text-align:right}
-    .fd-tbl thead th{position:sticky;top:0;background:var(--navy);color:#fff;font-size:9px;text-transform:uppercase;letter-spacing:.3px;z-index:2;text-align:center}
-    .fd-tbl thead tr.fd-grp th{top:0;background:#1a2f47;color:var(--gold)}
+    .fd-tbl thead th{position:sticky;top:0;background:var(--hdr);color:#fff;font-size:9px;text-transform:uppercase;letter-spacing:.3px;z-index:2;text-align:center}
+    .fd-tbl thead tr.fd-grp th{top:0;background:#5C8A98;color:var(--gold)}
     .fd-tbl thead tr:nth-child(2) th{top:21px}
     .fd-tbl .fd-sticky{position:sticky;left:0;background:var(--white);z-index:1;text-align:left;min-width:62px}
-    .fd-tbl thead .fd-sticky{background:var(--navy);z-index:3}
+    .fd-tbl thead .fd-sticky{background:var(--hdr);z-index:3}
     .fd-tbl tr.fd-fim td{background:#F8F5EC}
     .fd-tbl tr.fd-fim td.fd-sticky{background:#F2EDDC}
     .fd-tbl .fd-calc{background:#F1F5F9;font-weight:600}
@@ -900,7 +927,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--gold)}
     .fd-tbl tr.fd-tot td.fd-sticky,.fd-tbl tr.fd-pct td.fd-sticky{z-index:2}
     .fd-in{width:74px;padding:1px 4px;line-height:1.3;border:1px solid transparent;background:transparent;text-align:right;font-size:11px;font-family:inherit;border-radius:3px}
     .fd-in:hover{border-color:var(--border);background:#fff}
-    .fd-in:focus{border-color:var(--gold);background:#fff;outline:none}
+    .fd-in:focus{border-color:var(--gold-line);background:#fff;outline:none}
     .fd-in.fd-obs{width:150px;text-align:left}
   </style>
   <div class="hero">
@@ -1404,12 +1431,12 @@ function editarTransf(id, banco) {
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000;display:flex;align-items:center;justify-content:center';
   overlay.innerHTML = `
     <div style="background:#fff;border-radius:12px;padding:24px;width:380px;box-shadow:0 8px 32px rgba(0,0,0,.2)">
-      <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--navy);margin-bottom:4px">✏️ Informar Banco da Transferência</div>
+      <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:700;color:var(--navy);margin-bottom:4px">✏️ Informar Banco da Transferência</div>
       <div style="font-size:11px;color:var(--slate);margin-bottom:16px">${String(lanc.descricao).substring(0,50)} · ${fmtR(lanc.valor)}</div>
       <label style="font-size:11px;font-weight:600;color:var(--navy);display:block;margin-bottom:4px">
         ${lanc.valor < 0 ? 'Banco de Destino (para onde foi)' : 'Banco de Origem (de onde veio)'}
       </label>
-      <select id="transf-dest-${id}" style="width:100%;padding:8px;border:1.5px solid var(--gold);border-radius:6px;font-size:12px;margin-bottom:12px">
+      <select id="transf-dest-${id}" style="width:100%;padding:8px;border:1.5px solid var(--gold-line);border-radius:6px;font-size:12px;margin-bottom:12px">
         <option value="">— Selecione —</option>
         ${bancosOpts.map(b=>`<option value="${b}" ${(lanc.bancoDest||lanc.bancoOrig)===b?'selected':''}>${b}</option>`).join('')}
       </select>
@@ -1417,7 +1444,7 @@ function editarTransf(id, banco) {
       <input type="text" id="transf-obs-${id}" value="${lanc.obs||''}" placeholder="Ex: Adiantamento folha JEFTE" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:6px;font-size:11px;margin-bottom:16px">
       <div style="display:flex;gap:8px;justify-content:flex-end">
         <button onclick="document.getElementById('${modalId}').remove()" style="padding:7px 16px;border:1px solid var(--border);border-radius:6px;font-size:11px;cursor:pointer">Cancelar</button>
-        <button onclick="salvarTransf('${id}','${banco}','${modalId}')" style="padding:7px 16px;background:var(--gold);color:var(--navy);border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">💾 Salvar</button>
+        <button onclick="salvarTransf('${id}','${banco}','${modalId}')" style="padding:7px 16px;background:var(--gold-soft);color:var(--navy);border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">💾 Salvar</button>
       </div>
     </div>`;
   document.body.appendChild(overlay);
@@ -2142,11 +2169,11 @@ function renderDRE() {
     if (isGrupo) {
       const totalDesp = (l.custoFixo||0) + (l.despFixa||0) + (l.despVar||0) + (l.custo||0);
       return `<div class="dre-card" style="border-top:3px solid var(--navy)">
-        <div class="dre-hdr" style="background:var(--navy)">
+        <div class="dre-hdr" style="background:var(--hdr)">
           <h4 style="color:var(--gold)">🏢 GRUPO ELOHIM</h4>
           <small style="color:rgba(255,255,255,.5)">Escritório / Holding · ${l.periodo||'Período importado'}</small>
         </div>
-        <div class="dre-row" style="background:var(--gold-bg);border-left:3px solid var(--gold)">
+        <div class="dre-row" style="background:var(--gold-bg);border-left:3px solid var(--gold-line)">
           <span class="dre-lbl" style="font-weight:700;color:var(--amber)">Total Despesas Grupo</span>
           <span class="dre-val" style="color:var(--amber);font-weight:700">${fmtK(totalDesp)}</span>
         </div>
@@ -2173,7 +2200,7 @@ function renderDRE() {
         ${R(l.royalties,'Royalties','var(--amber)',1)}
         ${R(l.fundoMkt,'Fundo de Marketing','var(--amber)',1)}
         ${R(l.iof,'IOF / Tarifas','var(--amber)',1)}
-        <div class="dre-row" style="background:var(--navy);margin-top:4px">
+        <div class="dre-row" style="background:var(--hdr);margin-top:4px">
           <span class="dre-lbl" style="color:rgba(255,255,255,.6);font-size:10px">Este total é rateado pelas lojas do grupo</span>
           <span class="dre-val" style="color:var(--gold);font-weight:700">${fmtK(totalDesp)}</span>
         </div>
@@ -2231,7 +2258,7 @@ function renderDRE() {
   const lojasGr = lojas.filter(l => l.nome === 'GRUPO ELOHIM');
   const montarLinhaTabela = (l, i) => {
     const mg=(l.receita>0?(l.resultado/l.receita*100).toFixed(1):0);
-    return `<tr ${l.nome==='GRUPO ELOHIM'?'style="background:var(--navy)"':''}>
+    return `<tr ${l.nome==='GRUPO ELOHIM'?'style="background:var(--hdr)"':''}>
       <td style="font-weight:700;color:${l.nome==='GRUPO ELOHIM'?'var(--gold)':'var(--slate)'}">${i+1}</td>
       <td style="font-weight:700;color:${l.nome==='GRUPO ELOHIM'?'var(--gold)':'inherit'}">${l.nome==='GRUPO ELOHIM'?'🏢 '+l.nome:l.nome}</td>
       <td class="mono" style="color:${l.nome==='GRUPO ELOHIM'?'rgba(255,255,255,.4)':'inherit'}">${l.receita>0?fmtK(l.receita):'—'}</td>
@@ -2328,7 +2355,7 @@ function renderDRECompleto() {
   };
   el.innerHTML = S.dre.map(l => `
   <div class="dre-card" style="max-width:600px;margin-bottom:20px">
-    <div class="dre-hdr" style="background:var(--navy)">
+    <div class="dre-hdr" style="background:var(--hdr)">
       <h4 style="font-size:16px">DRE COMPLETO — ${l.nome}</h4>
       <small>${l.periodo||'Período importado'}</small>
     </div>
@@ -2527,7 +2554,7 @@ function atualizarCaixaDia() {
     el.style.display = 'block';
     const lojaLbl = S.lojaCaixaAtiva && S.lojaCaixaAtiva !== 'GRUPO' ? ` · ${S.lojaCaixaAtiva}` : ' · Grupo Consolidado';
     el.innerHTML = `
-      <div style="background:var(--navy);padding:12px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px">
+      <div style="background:var(--hdr);padding:12px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px">
         <div>
           <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.4)">Saldo Atual (Bancos)${lojaLbl}</div>
           <div style="font-size:20px;font-weight:700;color:${saldoAtual>=0?'#4ADE80':'#F87171'}">${fmtR(saldoAtual)}</div>
@@ -2811,7 +2838,7 @@ function renderFluxo(sub='projetado') {
     <div style="overflow-x:auto">
     <table style="width:100%;border-collapse:collapse;font-size:11px">
       <thead>
-        <tr style="background:var(--navy)">
+        <tr style="background:var(--hdr)">
           <th style="padding:8px 10px;text-align:left;color:var(--gold);font-size:9px;text-transform:uppercase;white-space:nowrap">Data</th>
           <th style="padding:8px 10px;text-align:right;color:rgba(255,255,255,.5);font-size:9px;text-transform:uppercase;white-space:nowrap">Saldo Inicial</th>
           <th style="padding:8px 10px;text-align:right;color:#A5B4FC;font-size:9px;text-transform:uppercase;white-space:nowrap">Entradas Previstas</th>
@@ -2837,7 +2864,7 @@ function renderFluxo(sub='projetado') {
           <td style="padding:7px 10px;white-space:nowrap">
             <span style="font-weight:700;color:${isHoje?'var(--gold)':isFimSem?'var(--slate)':'var(--navy)'}">${nd}</span>
             <span style="margin-left:4px;color:var(--slate)">${fmtDt(ln.d)}</span>
-            ${isHoje?'<span style="margin-left:4px;font-size:8px;background:var(--gold);color:var(--navy);padding:1px 4px;border-radius:2px;font-weight:700">HOJE</span>':''}
+            ${isHoje?'<span style="margin-left:4px;font-size:8px;background:var(--gold-soft);color:var(--navy);padding:1px 4px;border-radius:2px;font-weight:700">HOJE</span>':''}
           </td>
           <td style="padding:7px 10px;text-align:right;color:${ln.saldoIni>=0?'var(--slate)':'var(--red)'};font-weight:${ln.saldoIni<0?'700':'400'}">${fmtK(ln.saldoIni)}</td>
           <td style="padding:7px 10px;text-align:right;color:${ln.entPrev>0?'#6366F1':'var(--slate)'}">
@@ -2871,7 +2898,7 @@ function renderFluxo(sub='projetado') {
       }).join('')}
       </tbody>
       <tfoot>
-        <tr style="background:var(--navy);font-weight:700">
+        <tr style="background:var(--hdr);font-weight:700">
           <td style="padding:8px 10px;color:var(--gold)">TOTAL 90 dias</td>
           <td style="padding:8px 10px;text-align:right;color:rgba(255,255,255,.5)">${fmtK(saldoCarreg)}</td>
           <td style="padding:8px 10px;text-align:right;color:#A5B4FC">${fmtK(totEntP)}</td>
@@ -3191,7 +3218,7 @@ function _statusTermometro(loja) {
   const diff = saldoProj - folhaTotal;
   const margem = folhaTotal > 0 ? diff / folhaTotal : (saldoProj >= 0 ? 1 : -1);
   let cor, label;
-  if (folhaTotal <= 0)      { cor = '#9CA3AF'; label = 'Sem folha configurada'; }
+  if (folhaTotal <= 0)      { cor = '#7F93A0'; label = 'Sem folha configurada'; }
   else if (margem < 0)      { cor = 'var(--red)';   label = 'Déficit projetado'; }
   else if (margem < 0.15)   { cor = 'var(--amber)'; label = 'Margem apertada'; }
   else                       { cor = 'var(--green)'; label = 'Dentro da realidade'; }
@@ -3207,7 +3234,7 @@ function _statusTermometro(loja) {
   const diffReal = saldoReal - folhaTotal;
   const margemReal = folhaTotal > 0 ? diffReal / folhaTotal : (saldoReal >= 0 ? 1 : -1);
   let corReal, labelReal;
-  if (folhaTotal <= 0)         { corReal = '#9CA3AF'; labelReal = 'Sem folha configurada'; }
+  if (folhaTotal <= 0)         { corReal = '#7F93A0'; labelReal = 'Sem folha configurada'; }
   else if (margemReal < 0)     { corReal = 'var(--red)';   labelReal = 'Déficit no cenário real'; }
   else if (margemReal < 0.15)  { corReal = 'var(--amber)'; labelReal = 'Margem apertada (real)'; }
   else                          { corReal = 'var(--green)'; labelReal = 'Coberto no cenário real'; }
@@ -3248,24 +3275,24 @@ function renderRankingSemanal(targetId) {
       <span style="font-size:10px;color:var(--slate)">Semana de ${fmtDia(dataIni)} · crescimento vs. média das próprias últimas semanas</span>
     </div>
     <div style="padding:12px 14px;display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px">
-      <div style="flex:1;min-width:200px;background:var(--navy);border-radius:8px;padding:10px 14px">
+      <div style="flex:1;min-width:200px;background:var(--hdr);border-radius:8px;padding:10px 14px">
         <div style="font-size:8px;color:rgba(255,255,255,.5);text-transform:uppercase">💰 Maior Faturamento da Semana</div>
         <div style="font-size:14px;font-weight:800;color:var(--gold)">${maiorFaturamento.loja}</div>
         <div style="font-size:11px;color:#fff">${fmtK(maiorFaturamento.h.ultimaSemanaValor)}</div>
       </div>
-      <div style="flex:1;min-width:200px;background:var(--navy);border-radius:8px;padding:10px 14px">
+      <div style="flex:1;min-width:200px;background:var(--hdr);border-radius:8px;padding:10px 14px">
         <div style="font-size:8px;color:rgba(255,255,255,.5);text-transform:uppercase">🚀 Maior Crescimento (vs. si mesma)</div>
         <div style="font-size:14px;font-weight:800;color:var(--green)">${porCrescimento[0].loja}</div>
         <div style="font-size:11px;color:#fff">${porCrescimento[0].h.crescimento>=0?'+':''}${(porCrescimento[0].h.crescimento*100).toFixed(1)}%</div>
       </div>
-      <div style="flex:1;min-width:200px;background:var(--navy);border-radius:8px;padding:10px 14px">
+      <div style="flex:1;min-width:200px;background:var(--hdr);border-radius:8px;padding:10px 14px">
         <div style="font-size:8px;color:rgba(255,255,255,.5);text-transform:uppercase">🎯 Loja em Recuperação</div>
         <div style="font-size:14px;font-weight:800;color:var(--amber)">${emRecuperacao.loja}</div>
         <div style="font-size:11px;color:#fff">${(emRecuperacao.h.crescimento*100).toFixed(1)}% — precisa de apoio essa semana</div>
       </div>
     </div>
     <table style="width:100%;border-collapse:collapse;font-size:11px">
-      <thead><tr style="background:var(--navy)">
+      <thead><tr style="background:var(--hdr)">
         <th style="padding:6px 10px;text-align:center;color:var(--gold);font-size:9px">POS</th>
         <th style="padding:6px 10px;text-align:left;color:var(--gold);font-size:9px">LOJA</th>
         <th style="padding:6px 10px;text-align:right;color:rgba(255,255,255,.6);font-size:9px">FATURAMENTO SEMANA</th>
@@ -3751,7 +3778,7 @@ function renderMetaGerentes() {
       </div>
       <div style="overflow-x:auto">
       <table style="width:100%;border-collapse:collapse;font-size:10.5px">
-        <thead><tr style="background:var(--navy)">
+        <thead><tr style="background:var(--hdr)">
           <th style="padding:6px 8px;text-align:left;color:var(--gold);font-size:9px">MÊS</th>
           <th style="padding:6px 8px;text-align:right;color:rgba(255,255,255,.6);font-size:9px">FAT. ${anoAtual-1}</th>
           <th style="padding:6px 8px;text-align:right;color:rgba(255,255,255,.6);font-size:9px">FAT. ${anoAtual}</th>
@@ -3795,7 +3822,7 @@ function renderMetaGerentes() {
             <td style="padding:5px 8px;text-align:center;font-weight:700;color:${l.r.bonusConsistencia>0?'var(--green)':'var(--slate)'}">${l.r.bonusConsistencia>0?'🔥 +'+fmtK(l.r.bonusConsistencia):'—'}</td>
             <td style="padding:5px 8px;text-align:right;font-weight:800;color:var(--navy)">${l.r.total>0?fmtK(l.r.total):'—'}</td>
           </tr>`).join('')}
-        <tr style="background:var(--navy)">
+        <tr style="background:var(--hdr)">
           <td colspan="9" style="padding:7px 8px;color:#fff;font-weight:800;text-align:right">TOTAL DO ANO</td>
           <td style="padding:7px 8px;text-align:right;font-weight:800;color:var(--gold)">${fmtK(totalAno)}</td>
         </tr>
@@ -3808,7 +3835,7 @@ function renderMetaGerentes() {
     <div class="tbl-wrap" style="margin-bottom:16px">
       <div class="tbl-head"><span class="tbl-title">🥇 Ranking do Mês Atual (${MESES_META[new Date().getMonth()]}/${anoAtual}) — Todas as Lojas</span></div>
       <table style="width:100%;border-collapse:collapse;font-size:11px">
-        <thead><tr style="background:var(--navy)">
+        <thead><tr style="background:var(--hdr)">
           <th style="padding:6px 10px;text-align:center;color:var(--gold);font-size:9px">POS</th>
           <th style="padding:6px 10px;text-align:left;color:var(--gold);font-size:9px">LOJA</th>
           <th style="padding:6px 10px;text-align:right;color:rgba(255,255,255,.6);font-size:9px">PRÊMIO TOTAL</th>
@@ -3831,7 +3858,7 @@ function renderMetaGerentes() {
         <span style="font-size:10px;color:var(--slate)">Produtividade = faturamento ÷ horas trabalhadas (Ponto). Prime Cost = %CMV + %Mão de Obra (folha do Termômetro) — quanto menor, melhor.</span>
       </div>
       <table style="width:100%;border-collapse:collapse;font-size:10.5px">
-        <thead><tr style="background:var(--navy)">
+        <thead><tr style="background:var(--hdr)">
           <th style="padding:5px 8px;text-align:left;color:var(--gold);font-size:9px">LOJA</th>
           <th style="padding:5px 8px;text-align:right;color:rgba(255,255,255,.6);font-size:9px">HORAS TRABALHADAS</th>
           <th style="padding:5px 8px;text-align:right;color:rgba(255,255,255,.6);font-size:9px">R$/HORA</th>
@@ -3862,7 +3889,7 @@ function renderMetaGerentes() {
         <span style="font-size:10px;color:var(--slate)">Soma da premiação de todos os meses — a corrida de fundo, além do mês a mês</span>
       </div>
       <table style="width:100%;border-collapse:collapse;font-size:11px">
-        <thead><tr style="background:var(--navy)">
+        <thead><tr style="background:var(--hdr)">
           <th style="padding:6px 10px;text-align:center;color:var(--gold);font-size:9px">POS</th>
           <th style="padding:6px 10px;text-align:left;color:var(--gold);font-size:9px">LOJA</th>
           <th style="padding:6px 10px;text-align:right;color:rgba(255,255,255,.6);font-size:9px">ACUMULADO ${anoAtual}</th>
@@ -4081,7 +4108,7 @@ function renderCopaElohim() {
       <div style="overflow-x:auto">
       <table style="width:100%;border-collapse:collapse;font-size:10px">
         <thead>
-        <tr style="background:var(--navy)">
+        <tr style="background:var(--hdr)">
           <th style="padding:5px 6px;text-align:left;color:var(--gold);font-size:8.5px">MÊS</th>
           <th style="padding:5px 6px;text-align:center;color:rgba(255,255,255,.6);font-size:8.5px">ASSID.<br>5pt</th>
           <th style="padding:5px 6px;text-align:center;color:rgba(255,255,255,.6);font-size:8.5px">FATUR.<br>auto</th>
@@ -4189,7 +4216,7 @@ function renderCopaElohim() {
         <button class="btn btn-primary" onclick="registrarReclamacaoElogio()">+ Registrar</button>
       </div>
       <table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:6px">
-        <thead><tr style="background:var(--navy)">
+        <thead><tr style="background:var(--hdr)">
           <th style="padding:6px 10px;text-align:left;color:var(--gold);font-size:9px">DATA</th>
           <th style="padding:6px 10px;text-align:left;color:var(--gold);font-size:9px">LOJA</th>
           <th style="padding:6px 10px;text-align:left;color:rgba(255,255,255,.6);font-size:9px">TIPO</th>
@@ -4215,7 +4242,7 @@ function renderCopaElohim() {
     <div class="tbl-wrap">
       <div class="tbl-head"><span class="tbl-title">🏆 Copa Elohim — Ranking do Mês Atual (${MESES_META[new Date().getMonth()]}/${anoAtual})</span></div>
       <table style="width:100%;border-collapse:collapse;font-size:11px">
-        <thead><tr style="background:var(--navy)">
+        <thead><tr style="background:var(--hdr)">
           <th style="padding:6px 10px;text-align:center;color:var(--gold);font-size:9px">POS</th>
           <th style="padding:6px 10px;text-align:left;color:var(--gold);font-size:9px">LOJA</th>
           <th style="padding:6px 10px;text-align:right;color:rgba(255,255,255,.6);font-size:9px">PONTOS</th>
@@ -4628,7 +4655,7 @@ function renderPontoMais() {
   });
 
   const secaoAniversarios = aniversariantesEmpresaMes.length ? `
-    <div class="tbl-wrap" style="margin-bottom:16px;border-top:3px solid var(--gold)">
+    <div class="tbl-wrap" style="margin-bottom:16px;border-top:3px solid var(--gold-line)">
       <div class="tbl-head"><span class="tbl-title">🎉 Aniversário de Empresa — ${MESES_META[hoje.getMonth()]}</span></div>
       <div style="padding:10px 14px;display:flex;gap:8px;flex-wrap:wrap">
         ${aniversariantesEmpresaMes.map(a => `<div style="background:var(--ivory);border-radius:8px;padding:8px 12px;font-size:11px"><b>${a.nome}</b> — ${a.loja} — completando ${a.anos} ano${a.anos>1?'s':''} de casa</div>`).join('')}
@@ -4645,7 +4672,7 @@ function renderPontoMais() {
         <input type="file" accept=".xlsx,.xls" multiple onchange="importarColaboradores(event)">
       </div>
       <table style="width:100%;border-collapse:collapse;font-size:10.5px">
-        <thead><tr style="background:var(--navy)">
+        <thead><tr style="background:var(--hdr)">
           <th style="padding:5px 8px;text-align:left;color:var(--gold);font-size:9px">NOME</th>
           <th style="padding:5px 8px;text-align:left;color:rgba(255,255,255,.6);font-size:9px">CARGO</th>
           <th style="padding:5px 8px;text-align:left;color:rgba(255,255,255,.6);font-size:9px">ADMISSÃO</th>
@@ -4680,7 +4707,7 @@ function renderPontoMais() {
       </div>
       ${lojasComHE.length ? `
       <table style="width:100%;border-collapse:collapse;font-size:10.5px">
-        <thead><tr style="background:var(--navy)">
+        <thead><tr style="background:var(--hdr)">
           <th style="padding:5px 8px;text-align:left;color:var(--gold);font-size:9px">LOJA</th>
           <th style="padding:5px 8px;text-align:right;color:rgba(255,255,255,.6);font-size:9px">JUSTIFICADA</th>
           <th style="padding:5px 8px;text-align:right;color:rgba(255,255,255,.6);font-size:9px">NÃO JUSTIFICADA</th>
@@ -4714,7 +4741,7 @@ function renderPontoMais() {
       <div style="padding:12px 14px"><input type="file" accept=".xlsx,.xls" multiple onchange="importarAbsenteismo(event)"></div>
       ${lojasComAbs.length ? `
       <table style="width:100%;border-collapse:collapse;font-size:10.5px">
-        <thead><tr style="background:var(--navy)">
+        <thead><tr style="background:var(--hdr)">
           <th style="padding:5px 8px;text-align:left;color:var(--gold);font-size:9px">LOJA</th>
           <th style="padding:5px 8px;text-align:right;color:rgba(255,255,255,.6);font-size:9px">% ABSENTEÍSMO</th>
           <th style="padding:5px 8px;text-align:left;color:rgba(255,255,255,.6);font-size:9px">MAIOR TAXA INDIVIDUAL</th>
@@ -4847,7 +4874,7 @@ function renderPontoMais() {
         <div style="padding:10px 14px">
           <div style="font-size:11px;font-weight:700;color:var(--navy);margin-bottom:6px">${nomeMes}/${ano} — ${mes.totalFaltas} falta(s) no total, ${mes.totalHorasExtras.toFixed(1)}h extras no total</div>
           <table style="width:100%;border-collapse:collapse;font-size:10.5px;margin-bottom:10px">
-            <thead><tr style="background:var(--navy)">
+            <thead><tr style="background:var(--hdr)">
               <th style="padding:5px 8px;text-align:left;color:var(--gold);font-size:9px">COLABORADOR</th>
               <th style="padding:5px 8px;text-align:right;color:rgba(255,255,255,.6);font-size:9px">HORAS EXTRAS</th>
               <th style="padding:5px 8px;text-align:right;color:rgba(255,255,255,.6);font-size:9px">FALTAS</th>
@@ -4960,7 +4987,7 @@ function renderAuditoriaCLT() {
       </div>
       ${totalGeralSoma > 0 ? `
       <div style="padding:0 14px 14px">
-        <div style="background:var(--navy);border-radius:8px;padding:12px 16px;margin-bottom:10px">
+        <div style="background:var(--hdr);border-radius:8px;padding:12px 16px;margin-bottom:10px">
           <div style="font-size:9px;color:rgba(255,255,255,.5);text-transform:uppercase">Total do Grupo (todas as lojas importadas)</div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-top:8px">
             ${CATEGORIAS_CLT_GRAVES.map(cat => `
@@ -4972,7 +4999,7 @@ function renderAuditoriaCLT() {
         </div>
       </div>` : ''}
       <table style="width:100%;border-collapse:collapse;font-size:10px">
-        <thead><tr style="background:var(--navy)">
+        <thead><tr style="background:var(--hdr)">
           <th style="padding:5px 6px;text-align:left;color:var(--gold);font-size:8.5px">LOJA</th>
           ${CATEGORIAS_CLT_GRAVES.map(c=>`<th style="padding:5px 6px;text-align:center;color:rgba(255,255,255,.6);font-size:8px">${c}</th>`).join('')}
           <th style="padding:5px 6px;text-align:center;color:rgba(255,255,255,.6);font-size:8.5px">FALTAS</th>
@@ -4997,7 +5024,7 @@ function renderAuditoriaCLT() {
       <div style="padding:10px 14px">
         <div style="font-size:11px;font-weight:700;margin-bottom:6px">Funcionários com mais ocorrências graves (CLT):</div>
         <table style="width:100%;border-collapse:collapse;font-size:10.5px">
-          <thead><tr style="background:var(--navy)">
+          <thead><tr style="background:var(--hdr)">
             <th style="padding:5px 8px;text-align:left;color:var(--gold);font-size:9px">COLABORADOR</th>
             <th style="padding:5px 8px;text-align:right;color:rgba(255,255,255,.6);font-size:9px">OCORRÊNCIAS GRAVES</th>
           </tr></thead>
@@ -5038,7 +5065,7 @@ function renderCmvPerdas() {
         <div style="font-size:9px;color:var(--slate);margin-top:4px">Pode subir vários arquivos de uma vez (um por loja). O sistema reconhece a loja pelo nome dentro do arquivo.</div>
       </div>
       <table style="width:100%;border-collapse:collapse;font-size:11px">
-        <thead><tr style="background:var(--navy)">
+        <thead><tr style="background:var(--hdr)">
           <th style="padding:6px 10px;text-align:center;color:var(--gold);font-size:9px">POS</th>
           <th style="padding:6px 10px;text-align:left;color:var(--gold);font-size:9px">LOJA</th>
           <th style="padding:6px 10px;text-align:right;color:rgba(255,255,255,.6);font-size:9px">GASTO INSUMOS</th>
@@ -5105,7 +5132,7 @@ function renderCmvPerdas() {
         <button class="btn btn-primary" onclick="registrarPerda()">+ Registrar</button>
       </div>
       <table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:6px">
-        <thead><tr style="background:var(--navy)">
+        <thead><tr style="background:var(--hdr)">
           <th style="padding:6px 10px;text-align:left;color:var(--gold);font-size:9px">DATA</th>
           <th style="padding:6px 10px;text-align:left;color:var(--gold);font-size:9px">LOJA</th>
           <th style="padding:6px 10px;text-align:left;color:rgba(255,255,255,.6);font-size:9px">MOTIVO</th>
@@ -5144,19 +5171,19 @@ function renderTermometroFolha(targetId) {
       <button class="btn btn-ghost" style="font-size:10px;margin-left:auto" onclick="entrarCentral('financeira');showPage('fluxo',document.querySelector('.ntab:nth-child(9)'));setTimeout(()=>showFluxo('folha',document.querySelector('#page-fluxo .itab[onclick*=folha]')),0)">⚙️ Configurar folha</button>
     </div>
     <div style="padding:14px">
-      <div style="background:var(--navy);border-radius:10px;padding:16px 18px;margin-bottom:14px;border-left:5px solid ${grupo.cor}">
-        <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.45);margin-bottom:8px">Grupo Consolidado · Pagamento em ${fmtDia(grupo.dataAlvo)} (${grupo.diasRestantes} dia${grupo.diasRestantes===1?'':'s'})</div>
+      <div style="background:#2B4D5C;border-radius:14px;padding:16px 18px;margin-bottom:14px;border-left:5px solid ${grupo.cor}">
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.8);margin-bottom:8px">Grupo Consolidado · Pagamento em ${fmtDia(grupo.dataAlvo)} (${grupo.diasRestantes} dia${grupo.diasRestantes===1?'':'s'})</div>
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px">
           <div>
             <div style="font-size:9px;color:rgba(255,255,255,.4)">🔮 OTIMISTA — Saldo projetado vs. folha</div>
             <div style="font-size:20px;font-weight:900;color:${grupo.cor}">${grupo.label}</div>
-            <div style="font-size:14px;font-weight:700;color:#fff">${fmtK(grupo.saldoProj)} <span style="color:rgba(255,255,255,.35)">/</span> ${fmtK(grupo.folhaTotal)}</div>
+            <div style="font-size:14px;font-weight:700;color:#fff">${fmtK(grupo.saldoProj)} <span style="color:rgba(255,255,255,.75)">/</span> ${fmtK(grupo.folhaTotal)}</div>
             <div style="font-size:10px;font-weight:700;color:${grupo.cor}">${grupo.diff>=0?'+':''}${fmtK(grupo.diff)} (${(grupo.margem*100).toFixed(0)}%)</div>
           </div>
           <div style="border-left:1px solid rgba(255,255,255,.15);padding-left:16px">
             <div style="font-size:9px;color:rgba(255,255,255,.4)">🎯 REAL — Saldo atual + já lançado</div>
             <div style="font-size:20px;font-weight:900;color:${grupo.corReal}">${grupo.labelReal}</div>
-            <div style="font-size:14px;font-weight:700;color:#fff">${fmtK(grupo.saldoReal)} <span style="color:rgba(255,255,255,.35)">/</span> ${fmtK(grupo.folhaTotal)}</div>
+            <div style="font-size:14px;font-weight:700;color:#fff">${fmtK(grupo.saldoReal)} <span style="color:rgba(255,255,255,.75)">/</span> ${fmtK(grupo.folhaTotal)}</div>
             <div style="font-size:10px;font-weight:700;color:${grupo.corReal}">${grupo.diffReal>=0?'+':''}${fmtK(grupo.diffReal)} (${(grupo.margemReal*100).toFixed(0)}%)</div>
           </div>
         </div>
@@ -5216,7 +5243,7 @@ function renderFolhaConfig() {
         </div>
       </div>
       <table style="width:100%;border-collapse:collapse;font-size:11px">
-        <thead><tr style="background:var(--navy)">
+        <thead><tr style="background:var(--hdr)">
           <th style="padding:7px 10px;text-align:left;color:var(--gold);font-size:9px;text-transform:uppercase">Loja</th>
           <th style="padding:7px 10px;text-align:right;color:rgba(255,255,255,.6);font-size:9px;text-transform:uppercase">Valor Base</th>
           <th style="padding:7px 10px;text-align:right;color:rgba(255,255,255,.6);font-size:9px;text-transform:uppercase">Ajustes (vales/rescisões/etc)</th>
@@ -5303,11 +5330,11 @@ function exportarFluxoDiario() {
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:Arial,sans-serif;font-size:10px;color:#1F2937;padding:20px}
-    h1{font-size:16px;font-weight:700;color:#0D1B2A;margin-bottom:2px}
+    h1{font-size:16px;font-weight:700;color:#3F6E7E;margin-bottom:2px}
     .sub{font-size:10px;color:#6B7280;margin-bottom:14px}
-    .escopo{display:inline-block;background:#C9A84C;color:#0D1B2A;font-weight:700;font-size:10px;padding:3px 10px;border-radius:4px;margin-bottom:8px}
+    .escopo{display:inline-block;background:#C9A84C;color:#3F6E7E;font-weight:700;font-size:10px;padding:3px 10px;border-radius:4px;margin-bottom:8px}
     table{width:100%;border-collapse:collapse}
-    th{background:#0D1B2A;color:#C9A84C;padding:6px 8px;text-align:left;font-size:9px;text-transform:uppercase}
+    th{background:#3F6E7E;color:#C9A84C;padding:6px 8px;text-align:left;font-size:9px;text-transform:uppercase}
     th.r{text-align:right}
     td{padding:5px 8px;border-bottom:1px solid #E5E7EB;font-size:10px}
     td.r{text-align:right}
@@ -5316,10 +5343,10 @@ function exportarFluxoDiario() {
     .zero{color:#6B7280}
     .hoje{background:#FFFBEB;font-weight:700}
     .fds{color:#9CA3AF}
-    .tot{background:#0D1B2A;color:#fff;font-weight:700}
+    .tot{background:#3F6E7E;color:#fff;font-weight:700}
     .tot td{color:#fff}
     .tot .gold{color:#C9A84C}
-    tfoot tr td{background:#0D1B2A;color:#fff;font-weight:700;padding:7px 8px}
+    tfoot tr td{background:#3F6E7E;color:#fff;font-weight:700;padding:7px 8px}
     .detalhe{font-size:9px;color:#6B7280;padding:2px 8px 4px 24px;border-bottom:1px dashed #E5E7EB}
     @media print{@page{margin:15mm 10mm;size:A4}}
   </style></head><body>
@@ -5471,17 +5498,17 @@ function editarLancRapido(id) {
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9000;display:flex;align-items:center;justify-content:center';
   overlay.innerHTML = `
     <div style="background:#fff;border-radius:12px;padding:24px;width:360px;box-shadow:0 8px 32px rgba(0,0,0,.2)">
-      <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--navy);margin-bottom:4px">✏️ Editar Lançamento</div>
+      <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:700;color:var(--navy);margin-bottom:4px">✏️ Editar Lançamento</div>
       <div style="font-size:11px;color:var(--slate);margin-bottom:16px">${l.loja||'Grupo'}</div>
       <label style="font-size:11px;font-weight:600;color:var(--navy);display:block;margin-bottom:4px">Data</label>
-      <input type="date" id="editlanc-data-${id}" value="${l.data}" style="width:100%;padding:8px;border:1.5px solid var(--gold);border-radius:6px;font-size:12px;margin-bottom:12px">
+      <input type="date" id="editlanc-data-${id}" value="${l.data}" style="width:100%;padding:8px;border:1.5px solid var(--gold-line);border-radius:6px;font-size:12px;margin-bottom:12px">
       <label style="font-size:11px;font-weight:600;color:var(--navy);display:block;margin-bottom:4px">Descrição</label>
-      <input type="text" id="editlanc-desc-${id}" value="${descEsc}" style="width:100%;padding:8px;border:1.5px solid var(--gold);border-radius:6px;font-size:12px;margin-bottom:12px">
+      <input type="text" id="editlanc-desc-${id}" value="${descEsc}" style="width:100%;padding:8px;border:1.5px solid var(--gold-line);border-radius:6px;font-size:12px;margin-bottom:12px">
       <label style="font-size:11px;font-weight:600;color:var(--navy);display:block;margin-bottom:4px">Valor (R$)</label>
-      <input type="text" inputmode="decimal" id="editlanc-val-${id}" value="${fmtOrc(l.valor)}" onfocus="this.select()" style="width:100%;padding:8px;border:1.5px solid var(--gold);border-radius:6px;font-size:13px;font-weight:700;margin-bottom:8px">
+      <input type="text" inputmode="decimal" id="editlanc-val-${id}" value="${fmtOrc(l.valor)}" onfocus="this.select()" style="width:100%;padding:8px;border:1.5px solid var(--gold-line);border-radius:6px;font-size:13px;font-weight:700;margin-bottom:8px">
       ${TIPOS_BOLETO.includes(l.tipo) ? '<div style="font-size:9px;color:var(--slate);margin-bottom:16px">📅 Esse lançamento é uma despesa/boleto — se a nova data cair em fim de semana ou feriado, ajusta automaticamente pro próximo dia útil.</div>' : '<div style="margin-bottom:16px"></div>'}      <div style="display:flex;gap:8px;justify-content:flex-end">
         <button onclick="document.getElementById('${modalId}').remove()" style="padding:7px 16px;border:1px solid var(--border);border-radius:6px;font-size:11px;cursor:pointer;background:#fff">Cancelar</button>
-        <button onclick="salvarEdicaoLancRapido('${id}','${modalId}')" style="padding:7px 16px;background:var(--gold);color:var(--navy);border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">💾 Salvar</button>
+        <button onclick="salvarEdicaoLancRapido('${id}','${modalId}')" style="padding:7px 16px;background:var(--gold-soft);color:var(--navy);border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">💾 Salvar</button>
       </div>
     </div>`;
   document.body.appendChild(overlay);
@@ -5547,24 +5574,24 @@ function editarLanc(id) {
   const tipoOpts = ['receita','despesa_fixa','despesa_variavel','investimento','transferencia'];
   const tipoLbl = {receita:'Receita',despesa_fixa:'Desp. Fixa',despesa_variavel:'Desp. Variável',investimento:'Investimento',transferencia:'Transferência'};
   tr.innerHTML = `
-    <td><input id="el-data-${id}" type="date" value="${l.data}" style="width:120px;padding:3px 5px;font-size:11px;border:1.5px solid var(--gold);border-radius:4px"></td>
-    <td><input id="el-desc-${id}" type="text" value="${l.descricao}" style="width:160px;padding:3px 5px;font-size:11px;border:1.5px solid var(--gold);border-radius:4px"></td>
-    <td><select id="el-tipo-${id}" style="padding:3px 5px;font-size:11px;border:1.5px solid var(--gold);border-radius:4px">
+    <td><input id="el-data-${id}" type="date" value="${l.data}" style="width:120px;padding:3px 5px;font-size:11px;border:1.5px solid var(--gold-line);border-radius:4px"></td>
+    <td><input id="el-desc-${id}" type="text" value="${l.descricao}" style="width:160px;padding:3px 5px;font-size:11px;border:1.5px solid var(--gold-line);border-radius:4px"></td>
+    <td><select id="el-tipo-${id}" style="padding:3px 5px;font-size:11px;border:1.5px solid var(--gold-line);border-radius:4px">
       ${tipoOpts.map(t=>`<option value="${t}" ${t===l.tipo?'selected':''}>${tipoLbl[t]}</option>`).join('')}
     </select></td>
-    <td><select id="el-loja-${id}" style="padding:3px 5px;font-size:11px;border:1.5px solid var(--gold);border-radius:4px">
+    <td><select id="el-loja-${id}" style="padding:3px 5px;font-size:11px;border:1.5px solid var(--gold-line);border-radius:4px">
       ${['','EFATA','JEFTE','SHEKINAH','YANNIS','EFRAIM','NERIAH','GEDULAH','SHADDAI','KADOSH','SHAMMAH','GRUPO'].map(lj=>`<option value="${lj}" ${lj===(l.loja||'')?'selected':''}>${lj||'— Grupo —'}</option>`).join('')}
     </select></td>
     <td><input id="el-val-${id}" type="text" inputmode="decimal" value="${fmtOrc(l.valor)}"
-      style="width:110px;padding:3px 5px;font-size:11px;text-align:right;border:1.5px solid var(--gold);border-radius:4px"
+      style="width:110px;padding:3px 5px;font-size:11px;text-align:right;border:1.5px solid var(--gold-line);border-radius:4px"
       placeholder="0,00"
       onfocus="this.select()"></td>
-    <td><select id="el-rec-${id}" style="padding:3px 5px;font-size:11px;border:1.5px solid var(--gold);border-radius:4px">
+    <td><select id="el-rec-${id}" style="padding:3px 5px;font-size:11px;border:1.5px solid var(--gold-line);border-radius:4px">
       <option value="nao" ${l.rec==='nao'?'selected':''}>Não</option>
       <option value="mensal" ${l.rec==='mensal'?'selected':''}>Mensal</option>
       <option value="semanal" ${l.rec==='semanal'?'selected':''}>Semanal</option>
     </select></td>
-    <td><select id="el-st-${id}" style="padding:3px 5px;font-size:11px;border:1.5px solid var(--gold);border-radius:4px">
+    <td><select id="el-st-${id}" style="padding:3px 5px;font-size:11px;border:1.5px solid var(--gold-line);border-radius:4px">
       <option value="previsto" ${l.status==='previsto'?'selected':''}>Previsto</option>
       <option value="realizado" ${l.status==='realizado'?'selected':''}>Realizado</option>
     </select></td>
@@ -5785,33 +5812,33 @@ function gerarRelExec() {
   const confPct = S.swfest ? Math.round(S.swfest.filter(r=>r.conferido).length/(S.swfest.filter(r=>r.status==='pago').length||1)*100) : null;
   el.innerHTML = `
   <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:32px;max-width:800px;margin:0 auto">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid var(--gold)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid var(--gold-line)">
       <div>
-        <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--navy)">GRUPO ELOHIM</div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:700;color:var(--navy)">GRUPO ELOHIM</div>
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--slate)">Relatório Executivo · ${per}</div>
       </div>
       <div style="text-align:right;font-size:10px;color:var(--slate)">Emitido em ${new Date().toLocaleDateString('pt-BR')}<br>Confidencial · Uso Interno</div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px">
-      <div style="background:var(--navy);border-radius:8px;padding:16px;text-align:center">
+      <div style="background:var(--hdr);border-radius:8px;padding:16px;text-align:center">
         <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.4);margin-bottom:6px">Receita do Grupo</div>
-        <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--gold)">${fmtK(tRec)}</div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:24px;font-weight:700;color:var(--gold)">${fmtK(tRec)}</div>
         <div style="font-size:10px;color:rgba(255,255,255,.4)">${per}</div>
       </div>
       <div style="background:${tRes>=0?'var(--green)':'var(--red)'};border-radius:8px;padding:16px;text-align:center">
         <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.5);margin-bottom:6px">Resultado Líquido</div>
-        <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:#fff">${fmtK(tRes)}</div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:24px;font-weight:700;color:#fff">${fmtK(tRes)}</div>
         <div style="font-size:10px;color:rgba(255,255,255,.5)">Margem: ${mg}%</div>
       </div>
-      <div style="background:var(--gold-bg);border:1px solid var(--gold);border-radius:8px;padding:16px;text-align:center">
+      <div style="background:var(--gold-bg);border:1px solid var(--gold-line);border-radius:8px;padding:16px;text-align:center">
         <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--amber);margin-bottom:6px">Lojas Lucrativas</div>
-        <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--navy)">${lucrativas}<span style="font-size:14px"> / ${lojas.length}</span></div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:24px;font-weight:700;color:var(--navy)">${lucrativas}<span style="font-size:14px"> / ${lojas.length}</span></div>
         <div style="font-size:10px;color:var(--slate)">${lojas.length-lucrativas} com prejuízo</div>
       </div>
     </div>
     ${lojas.length ? `
     <div style="margin-bottom:20px">
-      <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--navy);margin-bottom:12px;padding-left:10px;border-left:3px solid var(--gold)">Resultado por Loja</div>
+      <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;color:var(--navy);margin-bottom:12px;padding-left:10px;border-left:3px solid var(--gold-line)">Resultado por Loja</div>
       ${[...lojas].sort((a,b)=>b.resultado-a.resultado).map(l=>{
         const mg_l = l.receita>0?(l.resultado/l.receita*100).toFixed(1):0;
         return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
@@ -5826,7 +5853,7 @@ function gerarRelExec() {
     </div>` : '<div class="alert an"><span class="aicon">📊</span><div>Importe o DRE para preencher este relatório.</div></div>'}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
       ${lMelhor?`<div style="background:var(--green-bg);border-radius:8px;padding:14px;border:1px solid #6EE7B7"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin-bottom:6px">🏆 Destaque do Período</div><div style="font-weight:700;font-size:14px;color:var(--navy)">${lMelhor.nome}</div><div style="font-size:12px;color:var(--green)">Resultado: ${fmtK(lMelhor.resultado)}</div></div>`:''}
-      ${lPior?`<div style="background:var(--red-bg);border-radius:8px;padding:14px;border:1px solid #FCA5A5"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--red);margin-bottom:6px">🚨 Maior Atenção</div><div style="font-weight:700;font-size:14px;color:var(--navy)">${lPior.nome}</div><div style="font-size:12px;color:var(--red)">Resultado: ${fmtK(lPior.resultado)}</div></div>`:''}
+      ${lPior?`<div style="background:var(--red-bg);border-radius:8px;padding:14px;border:1px solid #F0B3AE"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--red);margin-bottom:6px">🚨 Maior Atenção</div><div style="font-weight:700;font-size:14px;color:var(--navy)">${lPior.nome}</div><div style="font-size:12px;color:var(--red)">Resultado: ${fmtK(lPior.resultado)}</div></div>`:''}
     </div>
     ${confPct!==null?`<div style="margin-bottom:16px;padding:12px;background:var(--blue-bg);border-radius:8px;border:1px solid #93C5FD">
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--blue);margin-bottom:6px">📋 Conferência Financeira</div>
