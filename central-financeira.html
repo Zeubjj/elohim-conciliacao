@@ -911,7 +911,7 @@ th{background:var(--hdr);color:var(--on-hdr)!important;font-size:9.5px}
     .fd-tbl{border-collapse:separate;border-spacing:0;font-size:11px;white-space:nowrap}
     .fd-tbl th,.fd-tbl td{padding:2px 5px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);text-align:right}
     .fd-tbl thead th{position:sticky;top:0;background:var(--hdr);color:#fff;font-size:9px;text-transform:uppercase;letter-spacing:.3px;z-index:2;text-align:center}
-    .fd-tbl thead tr.fd-grp th{top:0;background:#5C8A98;color:var(--gold)}
+    .fd-tbl thead tr.fd-grp th{top:0;background:#5C8A98;color:var(--on-hdr)}
     .fd-tbl thead tr:nth-child(2) th{top:21px}
     .fd-tbl .fd-sticky{position:sticky;left:0;background:var(--white);z-index:1;text-align:left;min-width:62px}
     .fd-tbl thead .fd-sticky{background:var(--hdr);z-index:3}
@@ -8549,6 +8549,271 @@ async function iniciarAppMultiusuario() {
     await iniciarAppMultiusuario();
   }
   // Sem sessão ativa: o overlay de login permanece visível (comportamento padrão do HTML)
+})();
+
+</script>
+<script>
+/* ── Ajuda contextual: botão "?" com explicação de cada tela, seção e botão ── */
+(function(){
+'use strict';
+const T = (t,o,p,c,a) => ({t,o,p,c,a});
+
+/* Telas (chave = id da página sem "page-") */
+const PAGINAS = {
+dashboard: T('Dashboard Financeiro do Grupo',
+ 'A tela inicial da Central Financeira. Reúne em um só lugar os números mais importantes das 10 lojas: receita, resultado, margem, folha de pagamento e o ranking entre as lojas.',
+ 'Dar uma visão rápida de como o grupo está, sem precisar abrir várias abas. É a tela para olhar primeiro, todo dia.',
+ ['Os cartões de indicadores (Receita do Grupo, Resultado Líquido, Margem Média, Divergências, Conferência) só mostram valores depois que você importa o DRE e roda a Conferência. Enquanto isso aparecem com um traço.','O Termômetro de Folha compara o dinheiro disponível com o valor da folha na data do pagamento.','O Ranking Semanal mostra quais lojas estão crescendo ou caindo em relação ao próprio histórico.','Mais abaixo ficam o aviso de fechamento do mês e os botões de backup.'],
+ 'Traço (—) em um cartão não é erro: significa que o dado ainda não foi importado.'),
+conferencia: T('Conferência Financeira',
+ 'A tela onde você envia os extratos dos bancos e o relatório de contas a pagar do SWfast para o sistema cruzar tudo. É a chamada conciliação tripla: Santander, Caixa e Unicred contra o SWfast.',
+ 'Descobrir automaticamente quais pagamentos do SWfast aparecem no banco (conferido), quais ainda não apareceram (pendente) e quais têm valor ou data diferente (divergente). Isso evita pagamento em duplicidade, conta esquecida e desvio.',
+ ['Para cada banco, escolha primeiro a loja no menu logo abaixo da caixa de envio e só depois clique para escolher o arquivo.','Se tiver arquivos de várias lojas, importe um de cada vez, escolhendo a loja antes de cada um.','O relatório SWfast detecta a loja sozinho, pelo conteúdo do arquivo.','Com os arquivos carregados, clique em Executar Conferência.','Use os botões de exportar para baixar as divergências ou o relatório completo em Excel.'],
+ 'O sistema aceita uma diferença de até R$ 0,02 por lançamento (arredondamentos). Qualquer valor acima disso vira divergência. Caixa e Unicred são opcionais; Santander e SWfast são o mínimo.'),
+santander: T('Extrato do Santander',
+ 'Todos os lançamentos do extrato do Santander que você importou na aba Conferência, já classificados pelo sistema: recebimentos, pagamentos e transferências.',
+ 'Consultar e filtrar o que entrou e saiu da conta, e ver o status de conferência de cada linha.',
+ ['Use os filtros no topo: loja, tipo (recebimento, pagamento, transferência), bandeira do cartão, status de conferência e busca por descrição.','Conferido quer dizer que o lançamento bateu com o SWfast. Pendente, que ainda não foi cruzado. Com divergência, que algo não bate.'],
+ 'Esta tela só mostra dados depois que o extrato é importado na aba Conferência.'),
+caixa: T('Extrato da Caixa Econômica Federal',
+ 'Os lançamentos do extrato da Caixa que você importou na aba Conferência.',
+ 'Consultar e filtrar o que entrou e saiu da conta da Caixa, com o status de conferência de cada linha.',
+ ['Use os filtros de loja, tipo, bandeira, status e a busca por descrição.'],
+ 'A Caixa é opcional na Conferência. Se a aba está vazia, o extrato ainda não foi importado.'),
+unicred: T('Extrato da Unicred',
+ 'Os lançamentos do extrato da Unicred que você importou na aba Conferência.',
+ 'Consultar e filtrar o que entrou e saiu da conta da Unicred, com o status de conferência.',
+ ['Use os filtros de tipo, bandeira, status e a busca por descrição.'],
+ 'A Unicred é opcional na Conferência. Se a aba está vazia, o extrato ainda não foi importado.'),
+swfest: T('SWFest, Contas a Pagar',
+ 'A lista de contas a pagar que veio do relatório do SWfast, de todas as lojas.',
+ 'Ver o que está pago ou pendente por loja e fornecedor, e saber se cada conta foi encontrada no banco.',
+ ['Filtre por loja, por status (pago ou pendente), por situação da conferência (OK, com divergência, não conferido) e busque pelo nome do fornecedor.'],
+ 'Uma conta marcada como paga no SWfast mas sem lançamento no banco aparece como divergência. Vale investigar.'),
+divergencias: T('Divergências',
+ 'O registro completo de tudo o que a Conferência encontrou de diferente entre o banco e o SWfast.',
+ 'Ter uma lista única do que precisa ser verificado, como um log de auditoria.',
+ ['Percorra a lista e resolva cada item na origem (no SWfast ou no banco).','Use o botão Excel para baixar a lista e distribuir entre a equipe.'],
+ 'Divergência é um sinal para conferir. Nem toda divergência é erro: pode ser só uma data diferente ou um lançamento que ainda vai compensar.'),
+dre: T('DRE Gerencial',
+ 'O Demonstrativo de Resultados de cada loja: receita, CMV (custo das mercadorias), custos fixos, despesas fixas, despesas variáveis e resultado operacional.',
+ 'Mostrar se cada loja dá lucro, e por quê. Os indicadores do Dashboard, dos KPIs e do Relatório Executivo dependem do DRE importado.',
+ ['Para importar: escolha a loja primeiro, depois selecione o arquivo DRE (.xlsx) exportado do SWfast. Importe um DRE por vez, um para cada loja.','Para lançar à mão: preencha o quadro da direita e use Adicionar / Atualizar Loja.','Troque entre as visões pelos botões abaixo: Cards por Loja, DRE Completo, Tabela Comparativa, Consolidado Grupo, Margem de Contribuição e Ponto de Equilíbrio.'],
+ 'Selecione sempre a loja antes de importar o arquivo. Se escolher a loja errada, o resultado vai para a loja errada.'),
+fluxo: T('Fluxo de Caixa',
+ 'A projeção do dinheiro que entra e sai nos próximos 90 dias, junto com o histórico do que realmente aconteceu.',
+ 'Antecipar falta de caixa antes que ela aconteça e comparar o planejado com o executado.',
+ ['Comece pelo Caixa do Dia: informe o saldo real dos bancos e os recebimentos previstos para hoje.','Use as abas Projetado 90 dias e Realizado × Projetado para acompanhar.','Em Lançamentos ficam as contas a pagar e a receber. Em Capital de Giro, a necessidade de dinheiro do negócio.','Termômetro Folha e CMV & Perdas ficam nas abas ao lado.'],
+ 'A projeção só é tão boa quanto os dados: lançamentos antigos marcados como "previsto" sem baixa distorcem o resultado.'),
+rh: T('Central RH, Gente, Metas e Conformidade',
+ 'O módulo de equipe, separado do fluxo de caixa: metas dos gerentes, a competição entre lojas, assiduidade, horas extras e a auditoria trabalhista.',
+ 'Acompanhar o desempenho das pessoas e reduzir o risco de passivo trabalhista.',
+ ['Meta Gerentes 2026: prêmios por faturamento, CMV, script de atendimento e consistência.','Copa Elohim: pontuação entre as lojas.','Assiduidade & Horas Extras: faltas, horas extras, banco de horas e intervalos.','Auditoria CLT: ocorrências sinalizadas pelo Pontomais.'],
+ 'Estes dados são sensíveis. Mantenha o acesso restrito ao escritório.'),
+orcamento: T('Orçamento Anual, Budget 2026',
+ 'O orçamento do ano: a meta de receita mensal de cada loja e do grupo.',
+ 'Comparar o que foi planejado com o que foi realizado, mês a mês, e acompanhar se cada loja está no ritmo.',
+ ['Em Budget, digite a meta de cada loja por mês, usando vírgula como decimal (exemplo: 38.737,55). O total é calculado ao sair do campo.','Clique em Salvar.','Em Orçado × Realizado, veja a comparação com o DRE importado.','Em Metas Ajustadas pela Sazonalidade, veja as metas redistribuídas conforme o histórico de 2022 a 2025.'],
+ 'Sem o DRE importado, a coluna Realizado fica vazia.'),
+kpis: T('KPIs do Grupo',
+ 'Os indicadores financeiros calculados a partir do DRE: ticket médio, margem, ponto de equilíbrio, retorno sobre investimento por loja e taxa de custo operacional.',
+ 'Comparar as lojas com o mesmo critério e achar rapidamente quem está fora do padrão.',
+ ['Importe o DRE na aba DRE. Os indicadores são calculados sozinhos.'],
+ 'Se estiver vazia, o DRE ainda não foi importado.'),
+calendario: T('Calendário Financeiro',
+ 'Um calendário do mês com os vencimentos e pagamentos, em cores: pago, a vencer e vencido.',
+ 'Ver de relance o que vence em cada dia e não deixar conta atrasar.',
+ ['Use Anterior e Próximo para trocar de mês e o menu para escolher a loja.','Verde indica pago, amarelo indica a vencer, vermelho indica vencido.'],
+ 'O calendário usa as contas lançadas no sistema. Conta que não foi lançada não aparece.'),
+executivo: T('Resumo Executivo para Sócios',
+ 'Uma página única com os números mais importantes do grupo, feita para reunião de sócios.',
+ 'Ter um resumo limpo e imprimível, sem precisar navegar pelas abas.',
+ ['Confira se o DRE e a Conferência do período estão atualizados.','Clique em Imprimir / Salvar PDF para gerar o arquivo.'],
+ 'O relatório reflete o que foi importado. Dado desatualizado gera relatório desatualizado.'),
+saude: T('Saúde do Sistema',
+ 'O "técnico" do sistema. Ele confere de hora em hora se tudo está funcionando e se os dados estão completos e coerentes.',
+ 'Avisar antes que um problema vire prejuízo: dado faltando, lançamento duplicado, banco fora do ar, robô parado ou erro de tela.',
+ ['Cada linha tem um nível: Erro (corrigir), Atenção (conferir), Info (informativo) e OK (tudo certo).','O selo numérico na aba mostra quantos pontos pedem atenção.','Clique em Verificar agora para refazer a checagem na hora.'],
+ 'A Saúde só sinaliza. Ela nunca altera nem apaga dados por conta própria. A decisão é sempre de uma pessoa.'),
+fechamento: T('Fechamento Diário',
+ 'O quadro do mês com as vendas de cada dia e quanto foi recebido, por forma de pagamento. Ele substitui o RDM que a consultoria preenchia.',
+ 'Mostrar, dia a dia, se o que foi vendido aparece nos recebimentos. A coluna Diferença acusa o que ainda não apareceu, o que ajuda a achar erro, atraso e desvio.',
+ ['Escolha a loja (ou Grupo, para ver todas somadas) e o mês.','Digite os valores nas células ou use Importar SWfast / Getnet para preencher a partir dos relatórios.','Confira a coluna Diferença: valor fora da tolerância aparece em alerta.','Lance o TEF do autoatendimento, que cai direto na conta e não passa pelo SWfast.'],
+ 'Diferença negativa com o campo TEF vazio costuma ser pagamento no totem ainda não lançado. Nada é gravado em importação antes de você conferir a prévia.')
+};
+
+/* Abas internas (uma explicação por grupo de abas) */
+const GRUPOS_ABAS = {
+ dre: T('Visões do DRE','As seis abas mostram os mesmos dados do DRE de formas diferentes.',null,
+  ['Cards por Loja: um resumo em cartões de cada loja.','DRE Completo: todas as linhas do demonstrativo, loja a loja.','Tabela Comparativa: as lojas lado a lado.','Consolidado Grupo: a soma de todas as lojas.','Margem de Contribuição: quanto sobra da receita depois do CMV e das despesas variáveis.','Ponto de Equilíbrio: quanto cada loja precisa faturar para cobrir todos os custos.'],null),
+ fluxo: T('Abas do Fluxo de Caixa','Seis visões do dinheiro da empresa.',null,
+  ['Projetado 90 dias: a previsão de entradas e saídas dos próximos 90 dias.','Realizado × Projetado: compara o que foi previsto com o que aconteceu.','Lançamentos: as contas a pagar e a receber, com status.','Capital de Giro: quanto dinheiro o negócio precisa ter para operar.','Termômetro Folha: se o caixa cobre a folha de pagamento na data.','CMV & Perdas: custo das mercadorias e perdas de estoque.','Os botões Relatório PDF e Excel exportam o que está na tela.'],null),
+ rh: T('Abas da Central RH','Quatro áreas de gestão de pessoas.',null,
+  ['Meta Gerentes 2026: prêmios dos gerentes.','Copa Elohim: competição entre lojas.','Assiduidade & Horas Extras: faltas, horas extras, banco de horas e intervalos.','Auditoria CLT: ocorrências com risco trabalhista.'],null),
+ orcamento: T('Abas do Orçamento','Três visões do orçamento anual.',null,
+  ['Definir: onde você digita a meta mensal de cada loja.','Orçado × Realizado: compara a meta com o resultado real.','Sazonalidade: metas redistribuídas conforme o histórico de vendas.'],null)
+};
+
+/* Seções (reconhecidas pelo início do título, sem emoji) */
+const SECOES = {
+'ranking de lojas': T('Ranking de Lojas','A lista das lojas ordenada pelo resultado do DRE, com receita, resultado, margem e status.','Mostrar quem está dando mais resultado e quem está para trás.',['Importe o DRE para preencher.'],null),
+'termômetro de folha': T('Termômetro de Folha','Compara o dinheiro disponível com o valor da folha de pagamento até a data do pagamento, loja a loja e para o grupo.','Avisar com antecedência se o caixa vai ou não cobrir a folha.',
+ ['Otimista: usa o saldo projetado, contando as vendas estimadas até a data do pagamento.','Real: usa só o saldo atual mais o que já está lançado, sem apostar em vendas futuras.','Verde indica coberto com folga (margem de 15% ou mais). Amarelo indica margem apertada. Vermelho indica déficit. Cinza indica folha ainda não configurada.','Configure o valor da folha de cada loja no botão Configurar folha.'],
+ 'O cenário Real é o mais seguro para decidir. O Otimista depende de a venda acontecer.'),
+'configuração da folha': T('Configuração da Folha por Loja','O cadastro do valor da folha de cada loja e do dia do pagamento.','Alimentar o Termômetro de Folha.',
+ ['Digite o valor base e os ajustes do mês (vales, rescisões, contratações).','Deixe o dia de pagamento em branco para usar o padrão do grupo.','Use Atualizar Histórico de Vendas para subir o relatório Comparativo Financeiro Semanal do SWfast. O sistema recalcula a média por loja das últimas 10 semanas.'],null),
+'ranking semanal entre lojas': T('Ranking Semanal entre Lojas','Compara o faturamento da última semana de cada loja com a média das próprias semanas anteriores.','Premiar quem está crescendo e dar apoio a quem está caindo, sem comparar lojas de tamanhos diferentes.',
+ ['Maior faturamento: a loja que mais vendeu na semana.','Maior crescimento: a loja que mais subiu em relação a si mesma.','Loja em recuperação: a que mais caiu.','Cores: verde é crescimento, amarelo é queda de até 10%, vermelho é queda maior.'],
+ 'Se nenhuma loja cresceu, o "maior crescimento" é só a que caiu menos. Semana ainda incompleta também puxa o número para baixo.'),
+'mensagem para o grupo do whatsapp': T('Mensagem para o Grupo do WhatsApp','Um texto pronto com o ranking semanal, para copiar e colar no grupo.','Comunicar o resultado às lojas sem precisar escrever à mão.',['Copie o texto gerado e cole no WhatsApp.','A meta de crescimento de 15% equivale a 100% da meta.'],'Revise o texto antes de enviar.'),
+'caixa do dia': T('Caixa do Dia','Um quadro rápido para você informar o saldo real dos bancos e o que vai entrar nos próximos dias.','Saber, hoje, quanto dinheiro existe e quanto está para entrar.',
+ ['Escolha o que visualizar: o grupo consolidado ou uma loja.','Digite o saldo do Santander e da Caixa de hoje.','Digite o previsto de Getnet e iFood para os próximos 2 dias e os vouchers previstos.','O sistema soma e atualiza o fluxo sozinho.'],'Digite os saldos com vírgula, por exemplo 12.450,00. Cada loja tem conta própria, e os dados reais por CNPJ vêm da Conferência.'),
+'adicionar lançamento manual': T('Adicionar Lançamento Manual','O formulário para registrar uma conta a pagar ou a receber que não veio de nenhum arquivo.','Incluir no fluxo um pagamento ou recebimento avulso.',['Preencha loja, descrição, valor, data e tipo.','Salve para o lançamento entrar no fluxo e no calendário.'],'Antes de lançar, confira se a conta já não está no sistema, para não duplicar.'),
+'lançamentos': T('Lançamentos','A lista das contas a pagar e a receber, com data, valor e status (previsto, pago ou recebido).','Controlar o que ainda vai acontecer e o que já foi baixado.',['Filtre pelo mês e pela loja.','Dê baixa em quem já foi pago ou recebido, ou ajuste a data de quem mudou.'],'Lançamento "previsto" vencido há muito tempo distorce o fluxo de caixa. Dê baixa ou corrija a data.'),
+'contas a pagar': T('Contas a Pagar','As contas a pagar importadas do SWfast para a loja escolhida.','Acompanhar o que vence e o que foi pago.',['Filtre por status e por fornecedor.'],null),
+'log de divergências': T('Log de Divergências','O registro de tudo o que a Conferência apontou de diferente entre banco e SWfast.','Servir de lista de verificação para a equipe.',['Resolva cada item na origem e rode a Conferência de novo.'],null),
+'comparativo entre lojas': T('Comparativo entre Lojas','As lojas lado a lado, com todas as linhas do DRE.','Achar onde uma loja gasta mais ou ganha menos que as outras.',['Use o botão Excel para baixar a tabela.'],null),
+'margem de contribuição por loja': T('Margem de Contribuição','O que sobra da receita depois de pagar o CMV e as despesas variáveis. É a conta de quanto cada loja contribui para cobrir os custos fixos.','Saber se a loja gera dinheiro para pagar a estrutura.',['Valor mais alto é melhor. Margem negativa significa que a loja perde dinheiro a cada venda.'],null),
+'ponto de equilíbrio por loja': T('Ponto de Equilíbrio','O faturamento mínimo que cada loja precisa ter para cobrir todos os seus custos.','Saber a meta mínima de venda: abaixo dela a loja dá prejuízo.',['Compare com o faturamento real: acima do ponto de equilíbrio há lucro, abaixo há prejuízo.'],null),
+'alerta preventivo': T('Alerta Preventivo, Ritmo Atual do Mês','Uma estimativa de como o mês vai fechar para cada gerente, baseada no ritmo recente de vendas.','Avisar cedo se a meta está em risco, ainda dá tempo de reagir.',['Verde indica que a loja está no caminho do prêmio máximo. Amarelo indica que alcança uma faixa menor. Vermelho indica que está fora da meta.'],'É uma estimativa e não substitui o fechamento oficial do mês.'),
+'plano de metas gerentes': T('Plano de Metas dos Gerentes 2026','A planilha do bônus dos gerentes. Fórmula oficial: crescimento sobre o mesmo mês do ano anterior, mais o percentual de CMV, mais o script de atendimento, mais o bônus de consistência.','Calcular o prêmio mensal de cada gerente e o total do ano.',
+ ['Digite o faturamento do ano anterior, o faturamento atual e o CMV em reais.','Marque o script de atendimento e informe quem verificou.','Faixas de prêmio: faturamento 8 a 9,99% = R$ 50; 10 a 14,99% = R$ 150; 15% ou mais = R$ 300. CMV até 40% = R$ 50; 30 a 34,99% = R$ 100; até 29,99% = R$ 250. Script = R$ 50. Consistência: 4 ou mais meses seguidos batendo a meta de faturamento = mais R$ 100 por mês.'],'Os valores digitados são salvos ao sair do campo.'),
+'ranking do mês atual': T('Ranking do Mês Atual','A classificação das lojas no mês corrente pela pontuação do plano de metas.','Mostrar quem está na frente na disputa do Gerente do Mês.',['Em caso de empate, vale o maior faturamento do mês.'],null),
+'produtividade': T('Produtividade e Prime Cost','Mostra quanto do faturamento é consumido por CMV e folha juntos (Prime Cost) em cada loja.','Achar lojas em que o custo de mercadoria e pessoal está comendo a margem.',['Quanto menor o Prime Cost, melhor.'],null),
+'hall da fama': T('Hall da Fama','O acumulado do ano: quem mais ganhou prêmios nos meses fechados.','Reconhecer os melhores gerentes do ano.',['Vem automaticamente do Plano de Metas.'],null),
+'copa elohim': T('Copa Elohim, Competição entre Lojas','Uma competição mensal entre as lojas. Faturamento e CMV vêm automaticamente do Meta Gerentes; os demais critérios são lançados à mão.','Estimular as lojas com uma disputa justa, com vários critérios, não só vendas.',
+ ['Critérios: assiduidade, faturamento, CMV, reclamações, elogios da franqueadora, nota do Google, inspeção, notas fiscais, script e XML.','Preencha os critérios manuais de cada mês.','A pontuação total define o ranking do mês.'],'Assiduidade vem automática se você importar o espelho de ponto do Pontomais.'),
+'fotos da inspeção': T('Fotos da Inspeção','As fotos da inspeção mensal de cada loja.','Guardar a evidência visual da inspeção usada na pontuação.',['Envie as fotos da loja e do mês.'],null),
+'funil de reclamações': T('Funil de Reclamações e Elogios','O registro de reclamações e elogios que chegam pela franqueadora.','Alimentar a pontuação da Copa e acompanhar a qualidade percebida pelo cliente.',['Registre o tipo (elogio ou reclamação), a loja e a data.'],null),
+'aniversário de empresa': T('Aniversário de Empresa','Os colaboradores que fazem aniversário de tempo de casa no mês.','Lembrar de reconhecer quem completa mais um ano.',[],null),
+'cadastro de colaboradores': T('Cadastro de Colaboradores e Tempo de Casa','A lista de colaboradores com a data de admissão e o tempo de casa.','Base para o reconhecimento e para as análises de equipe.',['Mantenha as datas de admissão atualizadas.'],null),
+'hora extra': T('Hora Extra, Justificada ou Não','Separa as horas extras que têm um motivo registrado das que não têm.','Hora extra sem motivo é o maior risco: mostra se a loja tem o hábito de anotar o porquê.',['Alimentada pelo espelho de ponto do Pontomais.'],'Alto volume sem justificativa é um sinal para conversar com o gerente.'),
+'absenteísmo': T('Absenteísmo','O percentual de horas de ausência de cada loja.','Acompanhar faltas. Usa a taxa oficial do Pontomais, mais precisa que contar dias.',['Verde é até 2%, amarelo de 2% a 5%, vermelho acima de 5%.'],null),
+'banco de horas': T('Banco de Horas, Saldo Acumulado','O saldo de horas de cada funcionário.','Saldo positivo alto é um passivo futuro de folga ou pagamento. Saldo muito negativo é funcionário devendo horas.',['Acompanhe os extremos e regularize.'],null),
+'alerta de intervalo': T('Alerta de Intervalo Intrajornada','Aponta quem não está respeitando o intervalo mínimo de descanso.','Evitar passivo trabalhista. O déficit é 60 minutos menos o intervalo registrado, somado por funcionário no mês.',['Defina o teto de alerta de déficit por mês.','Funcionários acima do teto aparecem em vermelho.'],'Usa os dados já importados na Auditoria CLT.'),
+'importar espelho de ponto': T('Importar Espelho de Ponto (Pontomais)','O envio dos arquivos de ponto do Pontomais.','Alimentar horas extras, faltas, banco de horas, a assiduidade da Copa e a Auditoria CLT.',['Pode enviar os arquivos das 10 lojas de uma vez.','O sistema reconhece a loja pelo nome do arquivo.'],null),
+'funcionários em observação': T('Funcionários em Observação','Quem tem muitas horas extras ou ocorrências no mês.','Direcionar a atenção do gerente e do RH.',[],null),
+'auditoria de conformidade': T('Auditoria de Conformidade Trabalhista (CLT)','As ocorrências que o Pontomais sinaliza automaticamente, como interjornada, intervalo e excesso de jornada.','Mostrar o risco real de passivo trabalhista, sem opinião do sistema.',['Pode subir os arquivos das 10 lojas de uma vez.','Vermelho indica ocorrências. Verde indica nenhuma.','Clique em uma loja para ver o detalhe por colaborador.'],'Ocorrência é indício. Confira o caso antes de agir.'),
+'detalhe': T('Detalhe por Loja','O detalhamento das ocorrências de uma loja, colaborador por colaborador.','Saber exatamente quem e o quê.',[],null),
+'importar venda de insumos': T('Importar Venda de Insumos (CMV)','O envio dos arquivos de venda de insumos de cada loja.','Calcular o CMV%: o gasto com insumos dividido pelo faturamento do período.',['Pode subir vários arquivos de uma vez. O sistema reconhece a loja pelo nome dentro do arquivo.'],'É uma aproximação do CMV até o controle de estoque real estar rodando em todas as lojas.'),
+'importar perdas': T('Importar Perdas do SWfast','O envio do relatório de saída de estoque do SWfast.','Somar as perdas por motivo já classificado, sem depender de lançamento manual.',['Pode subir vários arquivos.','Reimportar o mesmo período atualiza o valor e não duplica.'],null),
+'registrar perda': T('Registrar Perda ou Quebra Avulsa','O formulário para perdas do dia a dia, fora do fechamento oficial.','Registrar quebras e perdas que não passaram pelo SWfast.',['Toda perda precisa ter um motivo.'],null),
+'budget 2026': T('Budget 2026, Meta de Receita por Loja','A tabela onde se digita a meta de receita de cada loja, mês a mês.','Definir o orçamento do ano.',['Use vírgula como decimal.','O total é calculado ao sair do campo.','Clique em Salvar.'],null),
+'orçado': T('Orçado × Realizado','A comparação mês a mês entre a meta e o que foi faturado, por loja.','Ver quem está acima ou abaixo do orçamento.',['Var. é a variação entre o realizado e o orçado.'],null),
+'metas ajustadas': T('Metas Ajustadas pela Sazonalidade','As metas anuais redistribuídas pelos meses, conforme o histórico de vendas de 2022 a 2025.','Meses naturalmente mais fracos ou mais fortes recebem metas mais realistas.',[],null),
+'kpis detalhados': T('KPIs Detalhados por Loja','Todos os indicadores de cada loja em uma tabela.','Comparar as lojas com os mesmos critérios.',['Importe o DRE para calcular.'],null),
+'diferença por loja no mês': T('Diferença por Loja no Mês','A soma da diferença diária (recebido menos vendido) de cada loja no mês, começando pela de maior desvio.','Achar onde a venda não bate com o recebimento.',['Abra a loja para ver os dias com problema.'],'Diferença negativa = venda que não apareceu nos recebimentos.')
+};
+
+/* Botões (texto normalizado, sem emoji) */
+const BOTOES = {
+'executar conferência': T('Executar Conferência','O botão que roda o cruzamento entre os extratos dos bancos e o relatório do SWfast.','Descobrir o que está conferido, pendente ou divergente.',['Envie primeiro os arquivos e escolha a loja de cada um.','Clique e aguarde o resultado.'],'Rode de novo sempre que importar um arquivo novo.'),
+'importar swfast / getnet': T('Importar SWfast / Getnet','Abre a janela para enviar os relatórios e preencher o Fechamento Diário automaticamente.','Evitar digitação: o sistema lê os arquivos e distribui os valores nos dias certos.',['1. Cupons do SWfast (.xlsx): obrigatório. Pode enviar vários períodos juntos.','2. Extratos da Getnet (.csv de cartão e de voucher). O de PIX é opcional.','3. Extrato do Santander (.ofx): opcional, só para conferir o PIX do autoatendimento.','4. Revise a prévia de diferenças e confirme.'],'Nada é gravado antes de você conferir a prévia. O sistema nunca sobrescreve um valor que uma pessoa digitou.'),
+'histórico de verificações': T('Histórico de Verificações','A lista das verificações feitas a cada importação: cancelamentos, descontos, vendas sem pagamento e cartão sem Getnet, por operador.','Achar padrões que merecem uma conversa, como cancelamentos ou descontos fora do normal.',['Escolha uma loja para ver o histórico.'],'São sinais para conferir, não prova de irregularidade. Restrinja este painel ao escritório.'),
+'exportar excel': T('Exportar Excel','Baixa em planilha o que está na tela.','Guardar, enviar ou analisar os dados fora do sistema.',[],null),
+'exportar divergências': T('Exportar Divergências','Baixa em Excel a lista de divergências encontradas.','Distribuir para a equipe verificar.',[],null),
+'exportar relatório completo': T('Exportar Relatório Completo','Baixa em Excel o resultado completo da Conferência.','Arquivar e analisar com calma.',[],null),
+'exportar histórico completo (.xlsx)': T('Exportar Histórico Completo','Baixa uma planilha com todos os dados guardados.','Ter uma cópia dos números para análise e segurança.',[],null),
+'backup json': T('Backup JSON','Baixa um arquivo com os dados guardados neste navegador.','Ter uma cópia de segurança no seu computador.',['Faça todo dia 1º do mês.','Guarde o arquivo em um lugar seguro.'],'Os lançamentos também ficam na nuvem, mas o backup protege os dados que ficam só neste navegador.'),
+'restaurar json': T('Restaurar JSON','Carrega um arquivo de backup de volta no sistema.','Recuperar dados depois de um problema.',['Escolha o arquivo .json gerado pelo Backup.'],'Substitui os dados atuais do navegador pelos do arquivo.'),
+'limpar': T('Limpar','Apaga os dados guardados neste navegador.','Recomeçar do zero em um computador, por exemplo.',[],'Ação irreversível. Faça o Backup JSON antes e só use se tiver certeza.'),
+'configurar folha': T('Configurar Folha','Abre o cadastro do valor da folha e do dia de pagamento de cada loja.','Alimentar o Termômetro de Folha.',[],null),
+'imprimir / salvar pdf': T('Imprimir / Salvar PDF','Abre a impressão do resumo. Escolha Salvar como PDF para gerar o arquivo.','Levar o resumo para a reunião de sócios.',[],null)
+};
+
+/* ── Interface ── */
+const css = `
+.aj-btn{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;margin-left:8px;padding:0;border-radius:50%;border:1.5px solid var(--hdr);background:var(--blue-bg);color:var(--hdr);font:700 12px/1 'Plus Jakarta Sans',sans-serif;cursor:pointer;vertical-align:middle;flex:none;text-transform:none;letter-spacing:0}
+.aj-btn:hover,.aj-btn:focus-visible{background:var(--hdr);color:#fff;outline:none;box-shadow:0 0 0 3px rgba(63,110,126,.2)}
+.hero .aj-btn{border-color:#fff;background:rgba(255,255,255,.18);color:#fff}.hero .aj-btn:hover{background:#fff;color:var(--hdr)}
+#aj-fundo{position:fixed;inset:0;background:rgba(30,45,55,.45);z-index:100000;display:none;align-items:center;justify-content:center;padding:16px}
+#aj-fundo.on{display:flex}
+#aj-caixa{background:#fff;color:var(--ink);width:min(640px,100%);max-height:88vh;overflow:auto;border-radius:16px;box-shadow:0 20px 60px rgba(30,45,55,.35);padding:22px 24px 20px;font-family:'Plus Jakarta Sans',sans-serif}
+#aj-caixa h3{margin:0 0 12px;font-size:17px;line-height:1.3;color:var(--ink);display:flex;gap:10px;align-items:flex-start}
+#aj-caixa h3 span.aj-ico{flex:none;width:26px;height:26px;border-radius:50%;background:var(--hdr);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:14px;margin-top:-1px}
+#aj-caixa h4{margin:14px 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--hdr)}
+#aj-caixa p{margin:0;font-size:13.5px;line-height:1.6;color:var(--text-2)}
+#aj-caixa ol,#aj-caixa ul{margin:0;padding-left:20px;font-size:13.5px;line-height:1.6;color:var(--text-2)}
+#aj-caixa li{margin:3px 0}
+#aj-caixa .aj-atencao{margin-top:14px;padding:10px 12px;border-radius:10px;background:var(--amber-bg);color:var(--amber);font-size:13px;line-height:1.55}
+#aj-caixa .aj-atencao b{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.8px;margin-bottom:2px}
+#aj-fechar{margin-top:16px;width:100%;padding:10px;border:0;border-radius:10px;background:var(--hdr);color:#fff;font:700 13px 'Plus Jakarta Sans',sans-serif;cursor:pointer}
+#aj-fechar:hover,#aj-fechar:focus-visible{background:#2F5967;outline:none}
+@media print{.aj-btn,#aj-fundo{display:none!important}}`;
+const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+
+const fundo = document.createElement('div'); fundo.id = 'aj-fundo';
+fundo.innerHTML = '<div id="aj-caixa" role="dialog" aria-modal="true" aria-labelledby="aj-titulo"><h3 id="aj-titulo"></h3><div id="aj-corpo"></div><button type="button" id="aj-fechar">Entendi</button></div>';
+document.body.appendChild(fundo);
+
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+let ultimoFoco = null;
+function abrir(e){
+  if(!e) return;
+  let h = '';
+  if(e.o)  h += '<h4>O que é</h4><p>'+esc(e.o)+'</p>';
+  if(e.p)  h += '<h4>Para que serve</h4><p>'+esc(e.p)+'</p>';
+  if(e.c && e.c.length) h += '<h4>Como usar</h4><ol>'+e.c.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ol>';
+  if(e.a)  h += '<div class="aj-atencao"><b>Atenção</b>'+esc(e.a)+'</div>';
+  document.getElementById('aj-titulo').innerHTML = '<span class="aj-ico" aria-hidden="true">?</span><span>'+esc(e.t)+'</span>';
+  document.getElementById('aj-corpo').innerHTML = h;
+  ultimoFoco = document.activeElement;
+  fundo.classList.add('on');
+  document.getElementById('aj-caixa').scrollTop = 0;
+  document.getElementById('aj-fechar').focus();
+}
+function fechar(){ fundo.classList.remove('on'); if(ultimoFoco && ultimoFoco.focus) try{ultimoFoco.focus();}catch(_){} }
+document.getElementById('aj-fechar').addEventListener('click', fechar);
+fundo.addEventListener('click', ev => { if(ev.target === fundo) fechar(); });
+document.addEventListener('keydown', ev => { if(ev.key === 'Escape' && fundo.classList.contains('on')) fechar(); });
+
+const REG = {}; let seq = 0;
+function botao(entrada, rotulo){
+  const id = 'a'+(++seq); REG[id] = entrada;
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'aj-btn'; b.dataset.aj = id;
+  b.setAttribute('aria-label', 'Ajuda: ' + rotulo); b.title = 'O que é isto? Clique para ver a explicação';
+  b.textContent = '?';
+  return b;
+}
+document.addEventListener('click', ev => {
+  const b = ev.target.closest && ev.target.closest('.aj-btn');
+  if(!b) return;
+  ev.preventDefault(); ev.stopPropagation(); abrir(REG[b.dataset.aj]);
+}, true);
+
+const norm = t => String(t).replace(/&amp;/g,'&').replace(/[^\p{L}\p{N}\s&×/().-]/gu,' ').replace(/\s+/g,' ').trim().toLowerCase();
+const chavesSecao = Object.keys(SECOES).sort((a,b)=>b.length-a.length);
+
+function injetar(){
+  // 1) Telas
+  document.querySelectorAll('.page').forEach(pg => {
+    const k = pg.id.replace('page-','');
+    const ent = PAGINAS[k]; if(!ent) return;
+    const alvo = pg.querySelector('.hero h1') || pg.querySelector('.sh-title') || pg.querySelector('h2');
+    if(alvo && !alvo.querySelector(':scope > .aj-btn')) alvo.appendChild(botao(ent, ent.t));
+    // 2) Grupos de abas internas
+    const g = GRUPOS_ABAS[k];
+    if(g) pg.querySelectorAll('.itabs').forEach(row => { if(!row.querySelector('.aj-btn')) row.appendChild(botao(g, g.t)); });
+  });
+  // 3) Seções
+  document.querySelectorAll('.tbl-title').forEach(el => {
+    if(el.querySelector('.aj-btn')) return;
+    const n = norm(el.textContent); const k = chavesSecao.find(c => n.startsWith(c));
+    if(k) el.appendChild(botao(SECOES[k], SECOES[k].t));
+  });
+  // 4) Botões de ação
+  document.querySelectorAll('button.btn').forEach(b => {
+    if(b.classList.contains('aj-btn') || b.dataset.ajok) return;
+    const k = norm(b.textContent); const ent = BOTOES[k];
+    b.dataset.ajok = '1';
+    if(ent && b.parentNode) b.parentNode.insertBefore(botao(ent, ent.t), b.nextSibling);
+  });
+}
+let tmr = null;
+const obs = new MutationObserver(() => { clearTimeout(tmr); tmr = setTimeout(injetar, 250); });
+obs.observe(document.body, {childList:true, subtree:true});
+injetar();
 })();
 
 </script>
