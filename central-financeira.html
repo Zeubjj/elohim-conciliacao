@@ -208,10 +208,8 @@ td,.kpi-v,.dre-val,.fluxo-total,.fluxo-row{font-variant-numeric:tabular-nums}
 .btn{border-radius:10px;font-weight:700}
 input[type=number],input[type=text],input[type=date],select,textarea,.fbar select,.fbar input{border-radius:9px;font-size:12px}
 input:focus,select:focus,textarea:focus,.fbar select:focus,.fbar input:focus{border-color:var(--hdr);box-shadow:0 0 0 3px rgba(63,110,126,.15)}
-th{background:#E4EEF0;color:#3A5666;font-size:9.5px}
-.dre-hdr,.fluxo-hdr,.cal-hdr{background:#E4EEF0;color:#2F4B5A}
-.dre-hdr h4{color:#2F4B5A}
-.dre-hdr small{color:#6B8392}
+th{background:var(--hdr);color:var(--on-hdr)!important;font-size:9.5px}
+.dre-hdr h4,.dre-hdr small{color:var(--on-hdr)!important}
 .alert{border-radius:10px}
 .modal{border-radius:16px}
 .kpi.kn{border-top-color:var(--hdr)}.card.cn{border-top-color:var(--hdr)}
@@ -343,7 +341,7 @@ th{background:#E4EEF0;color:#3A5666;font-size:9.5px}
     <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px">
 
       <div style="flex:1;min-width:220px">
-        <div style="font-family:'Plus Jakarta Sans',sans-serif;color:var(--gold);font-size:15px;font-weight:700;margin-bottom:4px">💾 Dados Salvos Automaticamente</div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;color:var(--on-hdr);font-size:15px;font-weight:700;margin-bottom:4px">💾 Dados Salvos Automaticamente</div>
         <div style="font-size:11px;color:rgba(255,255,255,.45);line-height:1.6">Orçamentos, lançamentos, DRE e divergências são salvos no navegador e restaurados a cada abertura.<br><span style="color:rgba(255,255,255,.25)">Backup recomendado: todo dia 1º do mês.</span></div>
       </div>
 
@@ -2170,12 +2168,12 @@ function renderDRE() {
       const totalDesp = (l.custoFixo||0) + (l.despFixa||0) + (l.despVar||0) + (l.custo||0);
       return `<div class="dre-card" style="border-top:3px solid var(--navy)">
         <div class="dre-hdr" style="background:var(--hdr)">
-          <h4 style="color:var(--gold)">🏢 GRUPO ELOHIM</h4>
+          <h4 style="color:var(--on-hdr)">🏢 GRUPO ELOHIM</h4>
           <small style="color:rgba(255,255,255,.5)">Escritório / Holding · ${l.periodo||'Período importado'}</small>
         </div>
         <div class="dre-row" style="background:var(--gold-bg);border-left:3px solid var(--gold-line)">
-          <span class="dre-lbl" style="font-weight:700;color:var(--amber)">Total Despesas Grupo</span>
-          <span class="dre-val" style="color:var(--amber);font-weight:700">${fmtK(totalDesp)}</span>
+          <span class="dre-lbl" style="font-weight:700;color:#FFE08A">Total Despesas Grupo</span>
+          <span class="dre-val" style="color:#FFE08A;font-weight:700">${fmtK(totalDesp)}</span>
         </div>
         ${RT(l.custo||0,'Estoque / Fornecedores CMV','var(--red)')}
         ${R(l.cmvBebidas,'Bebidas prontas','var(--red)',1)}
@@ -2202,7 +2200,7 @@ function renderDRE() {
         ${R(l.iof,'IOF / Tarifas','var(--amber)',1)}
         <div class="dre-row" style="background:var(--hdr);margin-top:4px">
           <span class="dre-lbl" style="color:rgba(255,255,255,.6);font-size:10px">Este total é rateado pelas lojas do grupo</span>
-          <span class="dre-val" style="color:var(--gold);font-weight:700">${fmtK(totalDesp)}</span>
+          <span class="dre-val" style="color:var(--on-hdr);font-weight:700">${fmtK(totalDesp)}</span>
         </div>
       </div>`;
     }
@@ -2262,10 +2260,10 @@ function renderDRE() {
       <td style="font-weight:700;color:${l.nome==='GRUPO ELOHIM'?'var(--gold)':'var(--slate)'}">${i+1}</td>
       <td style="font-weight:700;color:${l.nome==='GRUPO ELOHIM'?'var(--gold)':'inherit'}">${l.nome==='GRUPO ELOHIM'?'🏢 '+l.nome:l.nome}</td>
       <td class="mono" style="color:${l.nome==='GRUPO ELOHIM'?'rgba(255,255,255,.4)':'inherit'}">${l.receita>0?fmtK(l.receita):'—'}</td>
-      <td class="mono" style="color:var(--red)">${fmtK(l.custo||0)}</td>
-      <td class="mono" style="color:var(--red)">${fmtK(l.custoFixo||0)}</td>
-      <td class="mono" style="color:var(--red)">${fmtK(l.despFixa||0)}</td>
-      <td class="mono" style="color:var(--amber)">${fmtK(l.despVar||0)}</td>
+      <td class="mono" style="color:#FFB4A8">${fmtK(l.custo||0)}</td>
+      <td class="mono" style="color:#FFB4A8">${fmtK(l.custoFixo||0)}</td>
+      <td class="mono" style="color:#FFB4A8">${fmtK(l.despFixa||0)}</td>
+      <td class="mono" style="color:#FFE08A">${fmtK(l.despVar||0)}</td>
       <td class="mono" style="color:${l.resultado>=0?'var(--green)':'var(--red)'};font-weight:700">${fmtR(l.resultado)}</td>
       <td class="mono" style="font-weight:600;color:${parseFloat(mg)>=0?'var(--green)':'var(--red)'}">${l.receita>0?mg+'%':'—'}</td>
       <td class="mono">${fmtK(l.aluguel||0)}</td>
@@ -2899,7 +2897,7 @@ function renderFluxo(sub='projetado') {
       </tbody>
       <tfoot>
         <tr style="background:var(--hdr);font-weight:700">
-          <td style="padding:8px 10px;color:var(--gold)">TOTAL 90 dias</td>
+          <td style="padding:8px 10px;color:var(--on-hdr)">TOTAL 90 dias</td>
           <td style="padding:8px 10px;text-align:right;color:rgba(255,255,255,.5)">${fmtK(saldoCarreg)}</td>
           <td style="padding:8px 10px;text-align:right;color:#A5B4FC">${fmtK(totEntP)}</td>
           <td style="padding:8px 10px;text-align:right;color:#86EFAC">${fmtK(totEntR)}</td>
@@ -3277,17 +3275,17 @@ function renderRankingSemanal(targetId) {
     <div style="padding:12px 14px;display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px">
       <div style="flex:1;min-width:200px;background:var(--hdr);border-radius:8px;padding:10px 14px">
         <div style="font-size:8px;color:rgba(255,255,255,.5);text-transform:uppercase">💰 Maior Faturamento da Semana</div>
-        <div style="font-size:14px;font-weight:800;color:var(--gold)">${maiorFaturamento.loja}</div>
+        <div style="font-size:14px;font-weight:800;color:var(--on-hdr)">${maiorFaturamento.loja}</div>
         <div style="font-size:11px;color:#fff">${fmtK(maiorFaturamento.h.ultimaSemanaValor)}</div>
       </div>
       <div style="flex:1;min-width:200px;background:var(--hdr);border-radius:8px;padding:10px 14px">
         <div style="font-size:8px;color:rgba(255,255,255,.5);text-transform:uppercase">🚀 Maior Crescimento (vs. si mesma)</div>
-        <div style="font-size:14px;font-weight:800;color:var(--green)">${porCrescimento[0].loja}</div>
+        <div style="font-size:14px;font-weight:800;color:#9BE3BF">${porCrescimento[0].loja}</div>
         <div style="font-size:11px;color:#fff">${porCrescimento[0].h.crescimento>=0?'+':''}${(porCrescimento[0].h.crescimento*100).toFixed(1)}%</div>
       </div>
       <div style="flex:1;min-width:200px;background:var(--hdr);border-radius:8px;padding:10px 14px">
         <div style="font-size:8px;color:rgba(255,255,255,.5);text-transform:uppercase">🎯 Loja em Recuperação</div>
-        <div style="font-size:14px;font-weight:800;color:var(--amber)">${emRecuperacao.loja}</div>
+        <div style="font-size:14px;font-weight:800;color:#FFE08A">${emRecuperacao.loja}</div>
         <div style="font-size:11px;color:#fff">${(emRecuperacao.h.crescimento*100).toFixed(1)}% — precisa de apoio essa semana</div>
       </div>
     </div>
@@ -3824,7 +3822,7 @@ function renderMetaGerentes() {
           </tr>`).join('')}
         <tr style="background:var(--hdr)">
           <td colspan="9" style="padding:7px 8px;color:#fff;font-weight:800;text-align:right">TOTAL DO ANO</td>
-          <td style="padding:7px 8px;text-align:right;font-weight:800;color:var(--gold)">${fmtK(totalAno)}</td>
+          <td style="padding:7px 8px;text-align:right;font-weight:800;color:var(--on-hdr)">${fmtK(totalAno)}</td>
         </tr>
         </tbody>
       </table>
@@ -5822,7 +5820,7 @@ function gerarRelExec() {
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px">
       <div style="background:var(--hdr);border-radius:8px;padding:16px;text-align:center">
         <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.4);margin-bottom:6px">Receita do Grupo</div>
-        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:24px;font-weight:700;color:var(--gold)">${fmtK(tRec)}</div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:24px;font-weight:700;color:var(--on-hdr)">${fmtK(tRec)}</div>
         <div style="font-size:10px;color:rgba(255,255,255,.4)">${per}</div>
       </div>
       <div style="background:${tRes>=0?'var(--green)':'var(--red)'};border-radius:8px;padding:16px;text-align:center">
