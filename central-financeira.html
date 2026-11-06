@@ -1020,7 +1020,10 @@ th{background:var(--hdr);color:var(--on-hdr)!important;font-size:9.5px}
 
 <script>
 // Tons claros (verde/vermelho/âmbar) para texto sobre painéis escuros
-function corClara(c){return ({'var(--red)':'#FF9C8F','var(--amber)':'#FFD36B','var(--green)':'#7FE0B0'})[c]||c;}
+function corClara(c){return ({'var(--red)':'#FF9C8F','var(--amber)':'#FFD36B','var(--green)':'#7FE0B0','var(--gold)':'var(--on-hdr)','var(--slate)':'#C9D6DC','var(--blue)':'#9CC4F0','var(--purple)':'#C9B8F2'})[c]||c;}
+function corTema(c,escuro){return escuro?corClara(c):c;}
+// Semáforo para crescimento: >= 0 verde, queda até 10% amarelo, queda maior vermelho (tons claros, para fundo escuro)
+function corSemaforoClara(v){return v>=0?'#7FE0B0':(v>-0.10?'#FFD36B':'#FF9C8F');}
 // ═══════ STATE ═══════
 const S = {
   santander: null, caixa: null, unicred: null, swfest: null, dre: [],
@@ -2259,15 +2262,15 @@ function renderDRE() {
   const montarLinhaTabela = (l, i) => {
     const mg=(l.receita>0?(l.resultado/l.receita*100).toFixed(1):0);
     return `<tr ${l.nome==='GRUPO ELOHIM'?'style="background:var(--hdr)"':''}>
-      <td style="font-weight:700;color:${l.nome==='GRUPO ELOHIM'?'var(--gold)':'var(--slate)'}">${i+1}</td>
-      <td style="font-weight:700;color:${l.nome==='GRUPO ELOHIM'?'var(--gold)':'inherit'}">${l.nome==='GRUPO ELOHIM'?'🏢 '+l.nome:l.nome}</td>
-      <td class="mono" style="color:${l.nome==='GRUPO ELOHIM'?'rgba(255,255,255,.4)':'inherit'}">${l.receita>0?fmtK(l.receita):'—'}</td>
+      <td style="font-weight:700;color:${l.nome==='GRUPO ELOHIM'?'var(--on-hdr)':'var(--slate)'}">${i+1}</td>
+      <td style="font-weight:700;color:${l.nome==='GRUPO ELOHIM'?'var(--on-hdr)':'inherit'}">${l.nome==='GRUPO ELOHIM'?'🏢 '+l.nome:l.nome}</td>
+      <td class="mono" style="color:${l.nome==='GRUPO ELOHIM'?'rgba(255,255,255,.8)':'inherit'}">${l.receita>0?fmtK(l.receita):'—'}</td>
       <td class="mono" style="color:#FFB4A8">${fmtK(l.custo||0)}</td>
       <td class="mono" style="color:#FFB4A8">${fmtK(l.custoFixo||0)}</td>
       <td class="mono" style="color:#FFB4A8">${fmtK(l.despFixa||0)}</td>
       <td class="mono" style="color:#FFE08A">${fmtK(l.despVar||0)}</td>
-      <td class="mono" style="color:${l.resultado>=0?'var(--green)':'var(--red)'};font-weight:700">${fmtR(l.resultado)}</td>
-      <td class="mono" style="font-weight:600;color:${parseFloat(mg)>=0?'var(--green)':'var(--red)'}">${l.receita>0?mg+'%':'—'}</td>
+      <td class="mono" style="color:${corTema(l.resultado>=0?'var(--green)':'var(--red)',l.nome==='GRUPO ELOHIM')};font-weight:700">${fmtR(l.resultado)}</td>
+      <td class="mono" style="font-weight:600;color:${corTema(parseFloat(mg)>=0?'var(--green)':'var(--red)',l.nome==='GRUPO ELOHIM')}">${l.receita>0?mg+'%':'—'}</td>
       <td class="mono">${fmtK(l.aluguel||0)}</td>
       <td class="mono">${fmtK(l.salarios||0)}</td>
       <td class="mono">${fmtK(l.delivery||0)}</td>
@@ -2906,7 +2909,7 @@ function renderFluxo(sub='projetado') {
           <td style="padding:8px 10px;text-align:right;color:#FCA5A5">${fmtK(totFixas)}</td>
           <td style="padding:8px 10px;text-align:right;color:#FCD34D">${fmtK(totVar)}</td>
           <td style="padding:8px 10px;text-align:right;color:#F87171">${fmtK(totFixas+totVar)}</td>
-          <td style="padding:8px 10px;text-align:right;color:${saldoFinalGlobal>=0?'var(--gold)':'#F87171'};font-size:13px">${fmtK(saldoFinalGlobal)}</td>
+          <td style="padding:8px 10px;text-align:right;color:${saldoFinalGlobal>=0?'var(--on-hdr)':'#FF9C8F'};font-size:13px">${fmtK(saldoFinalGlobal)}</td>
           <td></td>
         </tr>
       </tfoot>
@@ -3276,19 +3279,19 @@ function renderRankingSemanal(targetId) {
     </div>
     <div style="padding:12px 14px;display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px">
       <div style="flex:1;min-width:200px;background:var(--hdr);border-radius:8px;padding:10px 14px">
-        <div style="font-size:8px;color:rgba(255,255,255,.5);text-transform:uppercase">💰 Maior Faturamento da Semana</div>
-        <div style="font-size:14px;font-weight:800;color:var(--on-hdr)">${maiorFaturamento.loja}</div>
+        <div style="font-size:8px;color:rgba(255,255,255,.8);text-transform:uppercase">💰 Maior Faturamento da Semana</div>
+        <div style="font-size:14px;font-weight:800;color:#7FE0B0">${maiorFaturamento.loja}</div>
         <div style="font-size:11px;color:#fff">${fmtK(maiorFaturamento.h.ultimaSemanaValor)}</div>
       </div>
       <div style="flex:1;min-width:200px;background:var(--hdr);border-radius:8px;padding:10px 14px">
-        <div style="font-size:8px;color:rgba(255,255,255,.5);text-transform:uppercase">🚀 Maior Crescimento (vs. si mesma)</div>
-        <div style="font-size:14px;font-weight:800;color:#9BE3BF">${porCrescimento[0].loja}</div>
-        <div style="font-size:11px;color:#fff">${porCrescimento[0].h.crescimento>=0?'+':''}${(porCrescimento[0].h.crescimento*100).toFixed(1)}%</div>
+        <div style="font-size:8px;color:rgba(255,255,255,.8);text-transform:uppercase">🚀 Maior Crescimento (vs. si mesma)</div>
+        <div style="font-size:14px;font-weight:800;color:${corSemaforoClara(porCrescimento[0].h.crescimento)}">${porCrescimento[0].loja}</div>
+        <div style="font-size:11px;font-weight:700;color:${corSemaforoClara(porCrescimento[0].h.crescimento)}">${porCrescimento[0].h.crescimento>=0?'+':''}${(porCrescimento[0].h.crescimento*100).toFixed(1)}%</div>
       </div>
       <div style="flex:1;min-width:200px;background:var(--hdr);border-radius:8px;padding:10px 14px">
-        <div style="font-size:8px;color:rgba(255,255,255,.5);text-transform:uppercase">🎯 Loja em Recuperação</div>
-        <div style="font-size:14px;font-weight:800;color:#FFE08A">${emRecuperacao.loja}</div>
-        <div style="font-size:11px;color:#fff">${(emRecuperacao.h.crescimento*100).toFixed(1)}% — precisa de apoio essa semana</div>
+        <div style="font-size:8px;color:rgba(255,255,255,.8);text-transform:uppercase">🎯 Loja em Recuperação</div>
+        <div style="font-size:14px;font-weight:800;color:${corSemaforoClara(emRecuperacao.h.crescimento)}">${emRecuperacao.loja}</div>
+        <div style="font-size:11px;font-weight:700;color:${corSemaforoClara(emRecuperacao.h.crescimento)}">${(emRecuperacao.h.crescimento*100).toFixed(1)}% — precisa de apoio essa semana</div>
       </div>
     </div>
     <table style="width:100%;border-collapse:collapse;font-size:11px">
