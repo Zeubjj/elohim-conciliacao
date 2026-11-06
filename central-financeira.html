@@ -1019,6 +1019,8 @@ th{background:var(--hdr);color:var(--on-hdr)!important;font-size:9.5px}
 </div>
 
 <script>
+// Tons claros (verde/vermelho/âmbar) para texto sobre painéis escuros
+function corClara(c){return ({'var(--red)':'#FF9C8F','var(--amber)':'#FFD36B','var(--green)':'#7FE0B0'})[c]||c;}
 // ═══════ STATE ═══════
 const S = {
   santander: null, caixa: null, unicred: null, swfest: null, dre: [],
@@ -5169,20 +5171,20 @@ function renderTermometroFolha(targetId) {
       <button class="btn btn-ghost" style="font-size:10px;margin-left:auto" onclick="entrarCentral('financeira');showPage('fluxo',document.querySelector('.ntab:nth-child(9)'));setTimeout(()=>showFluxo('folha',document.querySelector('#page-fluxo .itab[onclick*=folha]')),0)">⚙️ Configurar folha</button>
     </div>
     <div style="padding:14px">
-      <div style="background:#2B4D5C;border-radius:14px;padding:16px 18px;margin-bottom:14px;border-left:5px solid ${grupo.cor}">
+      <div style="background:#2B4D5C;border-radius:14px;padding:16px 18px;margin-bottom:14px;border-left:5px solid ${corClara(grupo.cor)}">
         <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.8);margin-bottom:8px">Grupo Consolidado · Pagamento em ${fmtDia(grupo.dataAlvo)} (${grupo.diasRestantes} dia${grupo.diasRestantes===1?'':'s'})</div>
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px">
           <div>
-            <div style="font-size:9px;color:rgba(255,255,255,.4)">🔮 OTIMISTA — Saldo projetado vs. folha</div>
-            <div style="font-size:20px;font-weight:900;color:${grupo.cor}">${grupo.label}</div>
+            <div style="font-size:9px;color:rgba(255,255,255,.8)">🔮 OTIMISTA — Saldo projetado vs. folha</div>
+            <div style="font-size:20px;font-weight:900;color:${corClara(grupo.cor)}">${grupo.label}</div>
             <div style="font-size:14px;font-weight:700;color:#fff">${fmtK(grupo.saldoProj)} <span style="color:rgba(255,255,255,.75)">/</span> ${fmtK(grupo.folhaTotal)}</div>
-            <div style="font-size:10px;font-weight:700;color:${grupo.cor}">${grupo.diff>=0?'+':''}${fmtK(grupo.diff)} (${(grupo.margem*100).toFixed(0)}%)</div>
+            <div style="font-size:10px;font-weight:700;color:${corClara(grupo.cor)}">${grupo.diff>=0?'+':''}${fmtK(grupo.diff)} (${(grupo.margem*100).toFixed(0)}%)</div>
           </div>
           <div style="border-left:1px solid rgba(255,255,255,.15);padding-left:16px">
-            <div style="font-size:9px;color:rgba(255,255,255,.4)">🎯 REAL — Saldo atual + já lançado</div>
-            <div style="font-size:20px;font-weight:900;color:${grupo.corReal}">${grupo.labelReal}</div>
+            <div style="font-size:9px;color:rgba(255,255,255,.8)">🎯 REAL — Saldo atual + já lançado</div>
+            <div style="font-size:20px;font-weight:900;color:${corClara(grupo.corReal)}">${grupo.labelReal}</div>
             <div style="font-size:14px;font-weight:700;color:#fff">${fmtK(grupo.saldoReal)} <span style="color:rgba(255,255,255,.75)">/</span> ${fmtK(grupo.folhaTotal)}</div>
-            <div style="font-size:10px;font-weight:700;color:${grupo.corReal}">${grupo.diffReal>=0?'+':''}${fmtK(grupo.diffReal)} (${(grupo.margemReal*100).toFixed(0)}%)</div>
+            <div style="font-size:10px;font-weight:700;color:${corClara(grupo.corReal)}">${grupo.diffReal>=0?'+':''}${fmtK(grupo.diffReal)} (${(grupo.margemReal*100).toFixed(0)}%)</div>
           </div>
         </div>
       </div>
