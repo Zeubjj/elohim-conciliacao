@@ -266,6 +266,7 @@ th{background:var(--hdr);color:var(--on-hdr)!important;font-size:9.5px}
     <button class="ntab" onclick="showPage('executivo',this)" data-central="financeira" style="display:none">Relatório Exec.</button>
     <button class="ntab" onclick="showPage('fechamento',this)" data-central="financeira" style="display:none">Fechamento Diário<span id="fd-badge"></span></button>
     <button class="ntab" onclick="showPage('auditoria',this)" data-central="financeira" style="display:none">Auditoria de Caixa<span id="ac-badge"></span></button>
+    <button class="ntab" onclick="showPage('swdados',this)" data-central="financeira" style="display:none">Dados do SWfast</button>
     <button class="ntab" onclick="showPage('saude',this)" data-central="financeira" style="display:none">Saúde<span id="sh-badge"></span></button>
     <button class="ntab" onclick="showPage('rh',this)" data-central="rh" style="display:none">👥 RH &amp; Performance</button>
     <button class="ntab" onclick="irParaHub()" id="ntab-hub" style="border-left:1px solid rgba(255,255,255,.15);margin-left:6px;display:none">🏠 Trocar Central</button>
@@ -952,6 +953,36 @@ th{background:var(--hdr);color:var(--on-hdr)!important;font-size:9.5px}
   </div>
 </div>
 
+<div class="page" id="page-swdados">
+  <style>
+    .sd-filtros{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;padding:12px 16px}
+    .sd-filtros label{display:flex;flex-direction:column;gap:3px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--slate)}
+    .sd-filtros input,.sd-filtros select{padding:6px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;background:var(--white);color:var(--navy)}
+    .sd-scroll{overflow:auto;max-height:68vh}
+    .sd-num{text-align:right;font-family:var(--mono);white-space:nowrap}
+    .sd-bar{height:6px;border-radius:3px;background:var(--blue2);min-width:1px}
+    .sd-vazio{padding:28px 16px;text-align:center;color:var(--slate);font-size:12px}
+    .sd-rodape{padding:10px 16px;font-size:10px;color:var(--slate);border-top:1px solid var(--border)}
+    .sd-dre tr.sd-tot td{font-weight:700;background:var(--ivory)}
+    .sd-dre td.sd-ind{padding-left:26px;color:var(--text-2)}
+    tr.sd-clic{cursor:pointer}
+  </style>
+  <div style="max-width:1200px;margin:0 auto">
+    <h2 style="margin:0 0 4px;font-size:16px">Dados do SWfast</h2>
+    <div style="font-size:12px;color:var(--text-2);margin-bottom:12px">O que o robô leu dos relatórios do SWfast e conferiu com os totais do rodapé: contas a pagar, receitas a receber, compras e DRE por loja. Os dados chegam quando a Bruna baixa o relatório; esta tela só mostra, não altera nada no SWfast.</div>
+    <div id="sd-aviso"></div>
+    <div class="itabs">
+      <button class="itab active" data-aba="pagar" onclick="sdAba('pagar')">Contas a pagar</button>
+      <button class="itab" data-aba="receber" onclick="sdAba('receber')">Receitas a receber</button>
+      <button class="itab" data-aba="compras" onclick="sdAba('compras')">Compras</button>
+      <button class="itab" data-aba="dre" onclick="sdAba('dre')">DRE por loja</button>
+    </div>
+    <div class="tbl-wrap" id="sd-filtros-box"><div class="sd-filtros" id="sd-filtros"></div></div>
+    <div id="sd-kpis"></div>
+    <div id="sd-corpo"></div>
+  </div>
+</div>
+
 <div class="page" id="page-precif">
   <div class="hero">
     <div class="hero-eye">Módulo · Auditoria de Preços</div>
@@ -1158,6 +1189,7 @@ function showPage(id, el) {
   if (id === 'rh') { renderMensagemGrupo(); renderMetaGerentes(); }
   if (id === 'fechamento') { renderFechamento(); fdAtualizarAlertas(); }
   if (id === 'auditoria' && window.acRender) acRender();
+  if (id === 'swdados' && window.sdRender) sdRender();
   if (id === 'saude') { shRender(); if (!_sh.quando || Date.now() - _sh.quando > 300000) shExecutar(false); }
 }
 
@@ -9950,6 +9982,237 @@ window.pfDebug = { P, E, calc, custoBase, tresCustos, custoLinha };
     document.body.appendChild(a); a.click(); a.remove();
   };
   window.acDebug = AC;
+})();
+</script>
+<script>
+/* ═══ Dados do SWfast — mostra o que o robô gravou (robo_despesas, robo_receitas, robo_compras, robo_dre) ═══ */
+(function () {
+  const SD = { aba: 'pagar', cache: {}, carregando: false, erro: null, busca: '', f: {}, loja: '', mes: '', semNf: false, sit: '', det: null };
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const num = v => Number(v) || 0;
+  const R = v => 'R$ ' + num(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const P = v => (v === null || v === undefined || !isFinite(v)) ? '—' : (v * 100).toFixed(1).replace('.', ',') + '%';
+  const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const br = s => s ? String(s).slice(0, 10).split('-').reverse().join('/') : '—';
+  const el = id => document.getElementById(id);
+  const sem = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().trim();
+  const MESES = ['JANEIRO', 'FEVEREIRO', 'MARCO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
+  const hoje0 = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
+  const dias = s => Math.round((new Date(String(s).slice(0, 10) + 'T00:00:00') - hoje0()) / 864e5);
+  function nome(n) { n = String(n || '').trim(); const m = n.match(/^(MASSA VIVA|DA ILHA)\s+(.*)$/i); const p = (m ? m[2] : n).split(/\s+/); return p[p.length - 1] || n; }
+  function mesKey(m) { const p = String(m).split('-'); return (+p[0] || 0) * 100 + MESES.indexOf(sem(p[1])); }
+
+  async function buscar(tab, montar) {
+    const todos = [];
+    for (let p = 0; p < 30; p++) {
+      let q = sb.from(tab).select('*'); if (montar) q = montar(q);
+      const r = await q.order('id').range(p * 1000, p * 1000 + 999);
+      if (r.error) throw { tabela: tab, erro: r.error };
+      todos.push(...(r.data || []));
+      if ((r.data || []).length < 1000) break;
+    }
+    return todos;
+  }
+  function msgErro(e) {
+    const m = e && e.erro ? (e.erro.message || '') : String((e && e.message) || e || '');
+    if (e && e.erro && (e.erro.code === '42P01' || /does not exist|schema cache|Could not find/i.test(m)))
+      return '<div class="alert ar"><span class="aicon">⚠</span><div>A tabela <b>' + esc(e.tabela) + '</b> ainda não existe no Supabase. Rode o arquivo <b>sql-robo-leituras.sql</b> no SQL Editor.</div></div>';
+    return '<div class="alert ar"><span class="aicon">⚠</span><div>Não foi possível carregar' + (e && e.tabela ? ' (' + esc(e.tabela) + ')' : '') + ': ' + esc(m) + '</div></div>';
+  }
+
+  function periodoPadrao(aba) {
+    const h = new Date(), a = new Date(), b = new Date();
+    if (aba === 'pagar') { a.setDate(h.getDate() - 30); b.setDate(h.getDate() + 45); }
+    else if (aba === 'receber') { a.setDate(h.getDate() - 7); b.setDate(h.getDate() + 45); }
+    else { a.setDate(h.getDate() - 30); b.setDate(h.getDate()); }
+    return { de: iso(a), ate: iso(b) };
+  }
+  const TAB = { pagar: ['robo_despesas', 'vencimento'], receber: ['robo_receitas', 'vencimento'], compras: ['robo_compras', 'entrega'] };
+
+  async function carregar(aba, forca) {
+    if (aba === 'dre') {
+      if (SD.cache.dre && !forca) return render();
+      SD.carregando = true; SD.erro = null; render();
+      try { SD.cache.dre = await buscar('robo_dre'); } catch (e) { SD.erro = e; }
+      SD.carregando = false; return render();
+    }
+    if (!SD.f[aba]) SD.f[aba] = periodoPadrao(aba);
+    const f = SD.f[aba], chave = aba + '|' + f.de + '|' + f.ate;
+    if (SD.cache[aba] && SD.cache[aba].chave === chave && !forca) return render();
+    SD.carregando = true; SD.erro = null; render();
+    try {
+      const [tab, col] = TAB[aba];
+      const linhas = await buscar(tab, q => q.gte(col, f.de).lte(col, f.ate));
+      SD.cache[aba] = { chave, linhas };
+    } catch (e) { SD.erro = e; }
+    SD.carregando = false; render();
+  }
+
+  function filtrosHtml(aba) {
+    if (aba === 'dre') {
+      const dre = SD.cache.dre || [], meses = [...new Set(dre.map(r => r.mes))].sort((a, b) => mesKey(b) - mesKey(a));
+      if (!SD.mes || meses.indexOf(SD.mes) < 0) SD.mes = meses[0] || '';
+      return '<label>Mês<select onchange="sdMes(this.value)">' + meses.map(m => '<option value="' + esc(m) + '"' + (m === SD.mes ? ' selected' : '') + '>' + esc(String(m).replace('-', ' · ')) + '</option>').join('') + '</select></label><button class="btn btn-ghost" onclick="sdRecarregar()">↻ Atualizar</button>';
+    }
+    const f = SD.f[aba] || periodoPadrao(aba), rot = aba === 'compras' ? 'Entrega de' : 'Vencimento de';
+    let h = '<label>' + rot + '<input type="date" id="sd-de" value="' + f.de + '" onchange="sdPeriodo()"></label><label>Até<input type="date" id="sd-ate" value="' + f.ate + '" onchange="sdPeriodo()"></label>';
+    h += '<label>Buscar<input type="text" id="sd-busca" placeholder="' + (aba === 'receber' ? 'cliente ou documento' : 'fornecedor ou descrição') + '" value="' + esc(SD.busca) + '" oninput="sdBusca(this.value)"></label>';
+    if (aba === 'compras') h += '<label style="flex-direction:row;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:12px"><input type="checkbox" ' + (SD.semNf ? 'checked' : '') + ' onchange="sdSemNf(this.checked)">Só compras sem nota fiscal</label>';
+    return h + '<button class="btn btn-ghost" onclick="sdRecarregar()">↻ Atualizar</button>';
+  }
+
+  function kpiHtml(itens) {
+    return '<div class="kpi-row">' + itens.map(k => '<div class="kpi ' + k[0] + '"><div class="kpi-l">' + k[1] + '</div><div class="kpi-v">' + k[2] + '</div><div class="kpi-m">' + k[3] + '</div></div>').join('') + '</div>';
+  }
+  const vazio = t => '<div class="tbl-wrap"><div class="sd-vazio">' + t + '</div></div>';
+  function filtrar(linhas, campos) {
+    const q = sem(SD.busca); if (!q) return linhas;
+    return linhas.filter(r => campos.some(c => sem(r[c]).indexOf(q) >= 0));
+  }
+  function topPor(linhas, chaveFn, valFn, n) {
+    const m = {}; linhas.forEach(r => { const k = chaveFn(r) || '—'; m[k] = (m[k] || 0) + valFn(r); });
+    return Object.entries(m).sort((a, b) => b[1] - a[1]).slice(0, n);
+  }
+  function blocoTop(titulo, lista, total) {
+    if (!lista.length) return '';
+    const mx = lista[0][1] || 1;
+    return '<div class="tbl-wrap"><div class="tbl-head"><span class="tbl-title">' + titulo + '</span></div><div class="sd-scroll" style="max-height:340px"><table><tbody>'
+      + lista.map(x => '<tr><td>' + esc(x[0]) + '</td><td class="sd-num">' + R(x[1]) + '</td><td class="sd-num" style="color:var(--slate)">' + P(total ? x[1] / total : null) + '</td><td style="width:120px"><div class="sd-bar" style="width:' + Math.round(x[1] / mx * 100) + '%"></div></td></tr>').join('') + '</tbody></table></div></div>';
+  }
+
+  function abaPagar() {
+    const c = SD.cache.pagar; if (!c) return;
+    const todos = c.linhas, linhas = filtrar(todos, ['fornecedor', 'descricao']);
+    const total = linhas.reduce((s, r) => s + num(r.valor), 0);
+    const venc = linhas.filter(r => dias(r.vencimento) < 0), v7 = linhas.filter(r => { const d = dias(r.vencimento); return d >= 0 && d <= 7; });
+    const sv = venc.reduce((s, r) => s + num(r.valor), 0), s7 = v7.reduce((s, r) => s + num(r.valor), 0);
+    el('sd-kpis').innerHTML = kpiHtml([
+      ['kn', 'Em aberto no período', R(total), linhas.length + ' título(s)'],
+      [venc.length ? 'kr' : 'kg', 'Vencidos', R(sv), venc.length + ' título(s) já passaram do vencimento'],
+      ['ka', 'Vencem em 7 dias', R(s7), v7.length + ' título(s)'],
+      ['kb', 'Maior fornecedor', (topPor(linhas, r => r.fornecedor, r => num(r.valor), 1)[0] || ['—'])[0].slice(0, 18), (topPor(linhas, r => r.fornecedor, r => num(r.valor), 1)[0] ? R(topPor(linhas, r => r.fornecedor, r => num(r.valor), 1)[0][1]) : '')],
+      ['kp', 'Fornecedores', String(new Set(linhas.map(r => r.fornecedor)).size), 'distintos no período']
+    ]);
+    if (!linhas.length) return vazio('Nenhum título a pagar no período. O relatório de Contas a Pagar é carregado pela Bruna toda segunda-feira.');
+    const ord = linhas.slice().sort((a, b) => String(a.vencimento).localeCompare(String(b.vencimento)) || num(b.valor) - num(a.valor));
+    let h = '<div class="tbl-wrap"><div class="tbl-head"><span class="tbl-title">Títulos a pagar</span><span class="tbl-ct">' + linhas.length + '</span></div><div class="sd-scroll"><table><thead><tr><th>Vencimento</th><th>Prazo</th><th>Fornecedor</th><th>Descrição</th><th style="text-align:right">Valor</th><th>Situação</th></tr></thead><tbody>';
+    ord.slice(0, 400).forEach(r => {
+      const d = dias(r.vencimento);
+      const b = d < 0 ? '<span class="badge bdiv">Vencido há ' + (-d) + ' d</span>' : d === 0 ? '<span class="badge bwarn">Vence hoje</span>' : d <= 7 ? '<span class="badge bwarn">Em ' + d + ' d</span>' : '<span class="badge binfo">Em ' + d + ' d</span>';
+      h += '<tr><td>' + br(r.vencimento) + '</td><td>' + b + '</td><td><b>' + esc(r.fornecedor) + '</b></td><td style="white-space:normal">' + esc(r.descricao) + '</td><td class="sd-num">' + R(r.valor) + '</td><td>' + esc(r.situacao || '') + '</td></tr>';
+    });
+    h += '</tbody></table></div>' + (ord.length > 400 ? '<div class="sd-rodape">Mostrando os 400 primeiros por vencimento. Use a busca ou o período para ver o restante.</div>' : '') + '<div class="sd-rodape">O relatório de Contas a Pagar do SWfast não separa por loja; o total é do grupo.</div></div>';
+    return h + blocoTop('Maiores fornecedores no período', topPor(linhas, r => r.fornecedor, r => num(r.valor), 10), total);
+  }
+
+  function abaReceber() {
+    const c = SD.cache.receber; if (!c) return;
+    const linhas = filtrar(c.linhas, ['cliente', 'documento', 'grupo']);
+    const bruto = linhas.reduce((s, r) => s + num(r.valor), 0), liq = linhas.reduce((s, r) => s + num(r.liquido), 0);
+    el('sd-kpis').innerHTML = kpiHtml([
+      ['kb', 'A receber (bruto)', R(bruto), linhas.length + ' título(s)'],
+      ['kg', 'A receber (líquido)', R(liq), 'depois das taxas'],
+      ['ka', 'Taxas', R(bruto - liq), 'diferença entre bruto e líquido'],
+      ['kn', 'Taxa média', bruto ? P(1 - liq / bruto) : '—', 'ponderada pelo valor'],
+      ['kp', 'Clientes / operadoras', String(new Set(linhas.map(r => r.cliente)).size), 'distintos no período']
+    ]);
+    if (!linhas.length) return vazio('Nenhuma receita a receber no período. O relatório de Receitas é carregado pela Bruna toda segunda-feira.');
+    const por = {}; linhas.forEach(r => { const k = r.cliente || '—'; const o = por[k] = por[k] || { cli: k, n: 0, bruto: 0, liq: 0 }; o.n++; o.bruto += num(r.valor); o.liq += num(r.liquido); });
+    const arr = Object.values(por).sort((a, b) => b.bruto - a.bruto);
+    let h = '<div class="tbl-wrap"><div class="tbl-head"><span class="tbl-title">Por cliente / operadora (taxa efetiva)</span><span class="tbl-ct">' + arr.length + '</span></div><div class="sd-scroll" style="max-height:360px"><table><thead><tr><th>Cliente / operadora</th><th style="text-align:right">Títulos</th><th style="text-align:right">Bruto</th><th style="text-align:right">Líquido</th><th style="text-align:right">Taxa efetiva</th></tr></thead><tbody>'
+      + arr.map(o => '<tr><td><b>' + esc(o.cli) + '</b></td><td class="sd-num">' + o.n + '</td><td class="sd-num">' + R(o.bruto) + '</td><td class="sd-num">' + R(o.liq) + '</td><td class="sd-num">' + P(o.bruto ? 1 - o.liq / o.bruto : null) + '</td></tr>').join('') + '</tbody></table></div><div class="sd-rodape">Compare a taxa efetiva com o contrato de cada operadora. Taxa acima do contratado é motivo para cobrar a adquirente.</div></div>';
+    const ord = linhas.slice().sort((a, b) => String(a.vencimento).localeCompare(String(b.vencimento)));
+    h += '<div class="tbl-wrap"><div class="tbl-head"><span class="tbl-title">Títulos a receber</span><span class="tbl-ct">' + linhas.length + '</span></div><div class="sd-scroll"><table><thead><tr><th>Vencimento</th><th>Cliente / operadora</th><th>Documento</th><th>Grupo</th><th style="text-align:right">Valor</th><th style="text-align:right">Taxa</th><th style="text-align:right">Líquido</th></tr></thead><tbody>'
+      + ord.slice(0, 300).map(r => '<tr><td>' + br(r.vencimento) + '</td><td>' + esc(r.cliente) + '</td><td>' + esc(r.documento) + '</td><td>' + esc(r.grupo) + '</td><td class="sd-num">' + R(r.valor) + '</td><td class="sd-num">' + num(r.taxa).toFixed(1).replace('.', ',') + '%</td><td class="sd-num">' + R(r.liquido) + '</td></tr>').join('') + '</tbody></table></div>' + (ord.length > 300 ? '<div class="sd-rodape">Mostrando os 300 primeiros. Use a busca ou o período.</div>' : '') + '</div>';
+    return h;
+  }
+
+  function abaCompras() {
+    const c = SD.cache.compras; if (!c) return;
+    let linhas = filtrar(c.linhas, ['fornecedor', 'fornecedor_chave', 'nota_fiscal']);
+    if (SD.semNf) linhas = linhas.filter(r => r.sem_nf);
+    const total = linhas.reduce((s, r) => s + num(r.total_nota), 0), sn = linhas.filter(r => r.sem_nf), ssn = sn.reduce((s, r) => s + num(r.total_nota), 0);
+    el('sd-kpis').innerHTML = kpiHtml([
+      ['kn', 'Total comprado', R(total), linhas.length + ' compra(s)'],
+      [sn.length ? 'kr' : 'kg', 'Sem nota fiscal', R(ssn), sn.length + ' compra(s) · ' + P(total ? ssn / total : null) + ' do total'],
+      ['ka', 'Frete', R(linhas.reduce((s, r) => s + num(r.frete), 0)), 'no período'],
+      ['kb', 'Descontos', R(linhas.reduce((s, r) => s + num(r.descontos), 0)), 'recebidos dos fornecedores'],
+      ['kp', 'Fornecedores', String(new Set(linhas.map(r => r.fornecedor_chave || r.fornecedor)).size), 'distintos no período']
+    ]);
+    if (!linhas.length) return vazio('Nenhuma compra no período. O relatório de Entrada de Mercadoria é carregado pela Bruna nos dias 1 a 3 de cada mês.');
+    const ord = linhas.slice().sort((a, b) => String(b.entrega).localeCompare(String(a.entrega)));
+    let h = '<div class="tbl-wrap"><div class="tbl-head"><span class="tbl-title">Entradas de mercadoria</span><span class="tbl-ct">' + linhas.length + '</span></div><div class="sd-scroll"><table><thead><tr><th>Entrega</th><th>Fornecedor</th><th>Nota fiscal</th><th style="text-align:right">Produtos</th><th style="text-align:right">Frete</th><th style="text-align:right">Descontos</th><th style="text-align:right">Total</th></tr></thead><tbody>'
+      + ord.slice(0, 300).map(r => '<tr><td>' + br(r.entrega) + '</td><td><b>' + esc(r.fornecedor) + '</b></td><td>' + (r.sem_nf ? '<span class="badge bdiv">Sem NF</span>' : esc(r.nota_fiscal || '—')) + '</td><td class="sd-num">' + R(r.produtos) + '</td><td class="sd-num">' + R(r.frete) + '</td><td class="sd-num">' + R(r.descontos) + '</td><td class="sd-num">' + R(r.total_nota) + '</td></tr>').join('') + '</tbody></table></div><div class="sd-rodape">O relatório do SWfast não informa a loja da compra. Compra sem nota fiscal deve ser justificada pelo escritório.</div></div>';
+    return h + blocoTop('Maiores fornecedores', topPor(linhas, r => r.fornecedor_chave || r.fornecedor, r => num(r.total_nota), 10), total);
+  }
+
+  const SEC = ['RECEITA BRUTA', 'IMPOSTOS SOBRE VENDA', 'RECEITA OPERACIONAL LIQUIDA', 'CUSTO MERCADORIA VENDIDA', 'LUCRO BRUTO', 'CUSTO FIXO / PESSOAL', 'CUSTO FIXO / ENCARGOS', 'CUSTO FIXO / INSTALACOES', 'TOTAL DOS CUSTOS FIXOS', 'DESP. FIXAS / SERVICOS ADM', 'DESP. FIXAS / MATERIAL ADM', 'DESP. FIXAS / OPERACIONAL', 'DESP. FIXA / IMPOSTOS E TAXAS', 'TOTAL DESPESAS FIXAS', 'DESP. FINANCEIRAS', 'DESP. COM VENDAS', 'TOTAL DE DESPESAS VARIAVEIS', 'RESULTADO OPERACIONAL BRUTO', 'RECEITAS NAO OPERACIONAIS', 'DESPESAS NAO OPERACIONAIS', 'INVESTIMENTOS', 'RESULTADO OPERACIONAL ANTES PROVISAO IRPJ E CSSL', 'PROVISAO IRPJ E CSSL', 'RESULTADO LIQUIDO'];
+  const TOTAIS = ['RECEITA OPERACIONAL LIQUIDA', 'LUCRO BRUTO', 'TOTAL DOS CUSTOS FIXOS', 'TOTAL DESPESAS FIXAS', 'TOTAL DE DESPESAS VARIAVEIS', 'RESULTADO OPERACIONAL BRUTO', 'RESULTADO OPERACIONAL ANTES PROVISAO IRPJ E CSSL', 'RESULTADO LIQUIDO'];
+
+  function dreLoja(linhas) {
+    const sec = {};
+    linhas.forEach(r => { const k = sem(r.secao); const o = sec[k] = sec[k] || { titulo: r.secao, sub: null, soma: 0, itens: [] }; o.sub = r.subtotal_secao !== null && r.subtotal_secao !== undefined ? num(r.subtotal_secao) : o.sub; o.soma += num(r.valor); o.itens.push(r); });
+    const v = k => { const o = sec[k]; return o ? (o.sub !== null ? o.sub : o.soma) : 0; };
+    return { sec, rb: v('RECEITA BRUTA'), rl: v('RECEITA OPERACIONAL LIQUIDA'), cmv: v('CUSTO MERCADORIA VENDIDA'), lb: v('LUCRO BRUTO'), cf: v('TOTAL DOS CUSTOS FIXOS'), df: v('TOTAL DESPESAS FIXAS'), dv: v('TOTAL DE DESPESAS VARIAVEIS'), res: v('RESULTADO OPERACIONAL BRUTO'), v };
+  }
+
+  function abaDre() {
+    const dre = SD.cache.dre; if (!dre) return;
+    if (!dre.length) { el('sd-kpis').innerHTML = ''; return vazio('Nenhum DRE carregado ainda. A Bruna baixa o DRE de cada loja nos dias 1 a 3 do mês.'); }
+    const doMes = dre.filter(r => r.mes === SD.mes), porLoja = {};
+    doMes.forEach(r => { (porLoja[r.loja_nome] = porLoja[r.loja_nome] || []).push(r); });
+    const lojas = Object.keys(porLoja).map(n => ({ n, nome: nome(n), d: dreLoja(porLoja[n]) })).sort((a, b) => b.d.res - a.d.res);
+    const sum = f => lojas.reduce((s, o) => s + f(o.d), 0), rb = sum(d => d.rb), res = sum(d => d.res), cmv = sum(d => d.cmv);
+    const neg = lojas.filter(o => o.d.res < 0).length;
+    el('sd-kpis').innerHTML = kpiHtml([
+      ['kb', 'Receita bruta', R(rb), lojas.length + ' loja(s) com DRE em ' + esc(String(SD.mes).replace('-', ' · '))],
+      ['ka', 'CMV', R(cmv), P(rb ? cmv / rb : null) + ' da receita bruta'],
+      [res < 0 ? 'kr' : 'kg', 'Resultado operacional', R(res), P(rb ? res / rb : null) + ' da receita bruta'],
+      [neg ? 'kr' : 'kg', 'Lojas no negativo', String(neg), 'de ' + lojas.length + ' com DRE'],
+      ['kn', 'Faltam no mês', String(Math.max(0, 10 - lojas.length)), 'loja(s) do grupo sem DRE carregado']
+    ]);
+    let h = '<div class="tbl-wrap"><div class="tbl-head"><span class="tbl-title">Resultado por loja</span><span class="tbl-ct">clique numa loja para ver o DRE completo</span></div><div class="sd-scroll"><table><thead><tr><th>Loja</th><th style="text-align:right">Receita bruta</th><th style="text-align:right">CMV</th><th style="text-align:right">% CMV</th><th style="text-align:right">Lucro bruto</th><th style="text-align:right">Custos fixos</th><th style="text-align:right">Desp. fixas</th><th style="text-align:right">Desp. variáveis</th><th style="text-align:right">Resultado</th><th style="text-align:right">% receita</th></tr></thead><tbody>';
+    SD.nomes = lojas.map(o => o.n);
+    lojas.forEach((o, i) => {
+      const d = o.d;
+      h += '<tr class="sd-clic" onclick="sdDet(' + i + ')"><td><b>' + esc(o.nome) + '</b></td><td class="sd-num">' + R(d.rb) + '</td><td class="sd-num">' + R(d.cmv) + '</td><td class="sd-num">' + P(d.rb ? d.cmv / d.rb : null) + '</td><td class="sd-num">' + R(d.lb) + '</td><td class="sd-num">' + R(d.cf) + '</td><td class="sd-num">' + R(d.df) + '</td><td class="sd-num">' + R(d.dv) + '</td><td class="sd-num ' + (d.res < 0 ? 'vr' : 'vg') + '"><b>' + R(d.res) + '</b></td><td class="sd-num">' + P(d.rb ? d.res / d.rb : null) + '</td></tr>';
+    });
+    h += '</tbody></table></div><div class="sd-rodape">Mês corrente é parcial (vai até o último dia carregado no SWfast). Os números vêm do DRE do próprio SWfast, sem ajuste.</div></div>';
+    if (SD.det && porLoja[SD.det]) {
+      const d = dreLoja(porLoja[SD.det]);
+      const ordem = Object.keys(d.sec).sort((a, b) => { const ia = SEC.indexOf(a), ib = SEC.indexOf(b); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib); });
+      h += '<div class="tbl-wrap"><div class="tbl-head"><span class="tbl-title">DRE completo · ' + esc(nome(SD.det)) + ' · ' + esc(String(SD.mes).replace('-', ' · ')) + '</span><button class="btn btn-ghost" style="padding:3px 10px;font-size:10px" onclick="sdDet(null)">Fechar</button></div><div class="sd-scroll"><table class="sd-dre"><thead><tr><th>Linha</th><th style="text-align:right">Valor</th><th style="text-align:right">% da receita bruta</th></tr></thead><tbody>';
+      ordem.forEach(k => {
+        const s = d.sec[k], tot = TOTAIS.indexOf(k) >= 0, val = s.sub !== null ? s.sub : s.soma;
+        h += '<tr class="' + (tot || s.itens.length > 1 ? 'sd-tot' : '') + '"><td>' + esc(s.titulo) + '</td><td class="sd-num">' + R(val) + '</td><td class="sd-num">' + P(d.rb ? val / d.rb : null) + '</td></tr>';
+        if (s.itens.length > 1 || (!tot && s.itens.length === 1 && sem(s.itens[0].item) !== sem(s.titulo))) s.itens.forEach(i => { if (num(i.valor) !== 0) h += '<tr><td class="sd-ind">' + esc(i.item) + '</td><td class="sd-num">' + R(i.valor) + '</td><td class="sd-num" style="color:var(--slate)">' + P(d.rb ? num(i.valor) / d.rb : null) + '</td></tr>'; });
+      });
+      h += '</tbody></table></div></div>';
+    }
+    return h;
+  }
+
+  function render() {
+    const corpo = el('sd-corpo'); if (!corpo) return;
+    document.querySelectorAll('#page-swdados .itab').forEach(b => b.classList.toggle('active', b.dataset.aba === SD.aba));
+    const fb = el('sd-filtros'); if (fb && document.activeElement && document.activeElement.id !== 'sd-busca') fb.innerHTML = filtrosHtml(SD.aba);
+    if (SD.erro) { corpo.innerHTML = msgErro(SD.erro); el('sd-kpis').innerHTML = ''; return; }
+    const c = SD.cache[SD.aba];
+    if (SD.carregando && !c) { el('sd-kpis').innerHTML = ''; corpo.innerHTML = vazio('Carregando…'); return; }
+    if (!c) return;
+    const fn = { pagar: abaPagar, receber: abaReceber, compras: abaCompras, dre: abaDre }[SD.aba];
+    corpo.innerHTML = fn() || '';
+  }
+
+  window.sdRender = function () { carregar(SD.aba); };
+  window.sdAba = function (a) { SD.aba = a; SD.busca = ''; SD.det = null; const fb = el('sd-filtros'); if (fb) fb.innerHTML = filtrosHtml(a); carregar(a); };
+  window.sdRecarregar = function () { carregar(SD.aba, true); };
+  window.sdPeriodo = function () { const de = el('sd-de').value, ate = el('sd-ate').value; if (!de || !ate) return; SD.f[SD.aba] = { de, ate }; carregar(SD.aba); };
+  window.sdBusca = function (v) { SD.busca = v; render(); };
+  window.sdSemNf = function (v) { SD.semNf = v; render(); };
+  window.sdMes = function (v) { SD.mes = v; SD.det = null; render(); };
+  window.sdDet = function (i) { SD.det = (i === null || !SD.nomes) ? null : SD.nomes[i]; render(); };
+  window.sdDebug = SD;
 })();
 </script>
 </body>
