@@ -267,6 +267,7 @@ th{background:var(--hdr);color:var(--on-hdr)!important;font-size:9.5px}
     <button class="ntab" onclick="showPage('fechamento',this)" data-central="financeira" style="display:none">Fechamento Diário<span id="fd-badge"></span></button>
     <button class="ntab" onclick="showPage('auditoria',this)" data-central="financeira" style="display:none">Auditoria de Caixa<span id="ac-badge"></span></button>
     <button class="ntab" onclick="showPage('swdados',this)" data-central="financeira" style="display:none">Dados do SWfast</button>
+    <button class="ntab" onclick="showPage('concbanco',this)" data-central="financeira" style="display:none">Conciliação Bancária</button>
     <button class="ntab" onclick="showPage('saude',this)" data-central="financeira" style="display:none">Saúde<span id="sh-badge"></span></button>
     <button class="ntab" onclick="showPage('rh',this)" data-central="rh" style="display:none">👥 RH &amp; Performance</button>
     <button class="ntab" onclick="irParaHub()" id="ntab-hub" style="border-left:1px solid rgba(255,255,255,.15);margin-left:6px;display:none">🏠 Trocar Central</button>
@@ -983,6 +984,23 @@ th{background:var(--hdr);color:var(--on-hdr)!important;font-size:9.5px}
   </div>
 </div>
 
+<div class="page" id="page-concbanco">
+  <div style="max-width:1200px;margin:0 auto">
+    <h2 style="margin:0 0 4px;font-size:16px">Conciliação Bancária</h2>
+    <div style="font-size:12px;color:var(--text-2);margin-bottom:12px">O que entrou e saiu das contas do grupo, lido dos extratos (OFX) pelo robô: entradas por canal, saídas por tipo, juros do limite e transferências entre as empresas, que não contam como receita nem despesa.</div>
+    <div class="itabs">
+      <button class="itab active" data-aba="resumo" onclick="cbAba('resumo')">Resumo por empresa</button>
+      <button class="itab" data-aba="canais" onclick="cbAba('canais')">Canais e tipos</button>
+      <button class="itab" data-aba="grupo" onclick="cbAba('grupo')">Entre empresas</button>
+      <button class="itab" data-aba="lanc" onclick="cbAba('lanc')">Lançamentos</button>
+      <button class="itab" data-aba="cobertura" onclick="cbAba('cobertura')">Extratos recebidos</button>
+    </div>
+    <div class="tbl-wrap"><div class="sd-filtros" id="cb-filtros"></div></div>
+    <div id="cb-kpis"></div>
+    <div id="cb-corpo"></div>
+  </div>
+</div>
+
 <div class="page" id="page-precif">
   <div class="hero">
     <div class="hero-eye">Módulo · Auditoria de Preços</div>
@@ -1190,6 +1208,7 @@ function showPage(id, el) {
   if (id === 'fechamento') { renderFechamento(); fdAtualizarAlertas(); }
   if (id === 'auditoria' && window.acRender) acRender();
   if (id === 'swdados' && window.sdRender) sdRender();
+  if (id === 'concbanco' && window.cbRender) cbRender();
   if (id === 'saude') { shRender(); if (!_sh.quando || Date.now() - _sh.quando > 300000) shExecutar(false); }
 }
 
@@ -10213,6 +10232,213 @@ window.pfDebug = { P, E, calc, custoBase, tresCustos, custoLinha };
   window.sdMes = function (v) { SD.mes = v; SD.det = null; render(); };
   window.sdDet = function (i) { SD.det = (i === null || !SD.nomes) ? null : SD.nomes[i]; render(); };
   window.sdDebug = SD;
+})();
+
+/* ═══ Conciliação Bancária — lê o que o robô gravou dos extratos (robo_lancamentos_banco, robo_contas) ═══ */
+(function () {
+  const CB = { aba: 'resumo', linhas: null, contas: [], carregando: false, erro: null, de: '', ate: '', emp: '', busca: '', cat: '', quando: null };
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const num = v => Number(v) || 0;
+  const R = v => 'R$ ' + num(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const br = s => s ? String(s).slice(0, 10).split('-').reverse().join('/') : '—';
+  const el = id => document.getElementById(id);
+  const sem = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().trim();
+  const curto = n => { const p = String(n || '').trim().split(/\s+/)[0]; return p ? p.charAt(0) + p.slice(1).toLowerCase() : 'Sem empresa'; };
+
+  const CAT = {
+    getnet: 'GetNet (cartão)', ifood: 'iFood', pix_recebido: 'PIX recebido', ted_recebida: 'TED recebida', deposito_dinheiro: 'Depósito em dinheiro',
+    outra_entrada: 'Outras entradas', pix_devolvido: 'PIX devolvido', pix_enviado: 'PIX enviado', ted_enviada: 'TED enviada', boleto: 'Boletos',
+    imposto: 'Impostos', tarifa_juros: 'Juros, multas e tarifas', folha: 'Folha de pagamento', vale_alimentacao: 'Vale-alimentação (Ticket etc.)',
+    consumo: 'Consumo (luz, água, celular)', outra_saida: 'Outras saídas', transf_grupo: 'Entre empresas do grupo', grupo_conferir: 'Para "Massa Viva" / lojas (conferir)'
+  };
+  const ORD_ENT = ['getnet', 'ifood', 'pix_recebido', 'ted_recebida', 'deposito_dinheiro', 'outra_entrada'];
+  const ORD_SAI = ['boleto', 'folha', 'vale_alimentacao', 'pix_enviado', 'ted_enviada', 'imposto', 'tarifa_juros', 'consumo', 'pix_devolvido', 'outra_saida'];
+  const NOME_GRUPO = /MASSA ?VIVA|MINI CALZONES|PRAIA COMPRIDA|MASSAVIVA/;
+
+  function periodoPadrao() { const a = new Date(), b = new Date(); a.setDate(a.getDate() - 45); return { de: iso(a), ate: iso(b) }; }
+
+  async function buscar(tab, montar) {
+    const todos = [];
+    for (let p = 0; p < 80; p++) {
+      let q = sb.from(tab).select('*'); if (montar) q = montar(q);
+      const r = await q.order('id').range(p * 1000, p * 1000 + 999);
+      if (r.error) throw { tabela: tab, erro: r.error };
+      todos.push(...(r.data || []));
+      if ((r.data || []).length < 1000) break;
+    }
+    return todos;
+  }
+  function msgErro(e) {
+    const m = e && e.erro ? (e.erro.message || '') : String((e && e.message) || e || '');
+    if (e && e.erro && (e.erro.code === '42P01' || /does not exist|schema cache|Could not find/i.test(m)))
+      return '<div class="alert ar"><span class="aicon">⚠</span><div>A tabela <b>' + esc(e.tabela) + '</b> ainda não existe no Supabase. Rode o arquivo <b>sql-contas-e-extratos.sql</b> no SQL Editor.</div></div>';
+    return '<div class="alert ar"><span class="aicon">⚠</span><div>Não foi possível carregar' + (e && e.tabela ? ' (' + esc(e.tabela) + ')' : '') + ': ' + esc(m) + '</div></div>';
+  }
+
+  async function carregar(forca) {
+    if (!CB.de) { const p = periodoPadrao(); CB.de = p.de; CB.ate = p.ate; }
+    const chave = CB.de + '|' + CB.ate;
+    if (CB.linhas && CB.chave === chave && !forca) return render();
+    CB.carregando = true; CB.erro = null; render();
+    try {
+      CB.contas = await buscar('robo_contas');
+      CB.linhas = await buscar('robo_lancamentos_banco', q => q.gte('data', CB.de).lte('data', CB.ate));
+      CB.chave = chave; CB.quando = new Date();
+      classificar();
+    } catch (e) { CB.erro = e; }
+    CB.carregando = false; render();
+  }
+
+  // Marca transferências entre empresas do grupo: (1) categoria do robô; (2) débito com crédito idêntico (valor + data) em OUTRA conta, onde o crédito traz CNPJ do grupo;
+  // (3) débito para nome parecido com Massa Viva/lojas sem par = "conferir" (pode ser repasse ou pagamento externo; não some das saídas).
+  function classificar() {
+    const L = CB.linhas, credG = {};
+    L.forEach(r => { if (r.categoria === 'transf_grupo' && num(r.valor) > 0) { const k = Math.abs(num(r.valor)).toFixed(2) + '|' + String(r.data).slice(0, 10); (credG[k] = credG[k] || []).push(r); } });
+    L.forEach(r => {
+      const v = num(r.valor), k = Math.abs(v).toFixed(2) + '|' + String(r.data).slice(0, 10);
+      r._cat = r.categoria || (v > 0 ? 'outra_entrada' : 'outra_saida');
+      if (r.categoria === 'transf_grupo') return;
+      if (v < 0 && (r.categoria === 'pix_enviado' || r.categoria === 'ted_enviada')) {
+        if ((credG[k] || []).some(x => x.conta_id !== r.conta_id)) r._cat = 'transf_grupo';
+        else if (NOME_GRUPO.test(sem(r.contraparte || r.historico))) r._cat = 'grupo_conferir';
+      }
+    });
+  }
+
+  function visiveis() {
+    let L = CB.linhas || [];
+    if (CB.emp) L = L.filter(r => (r.empresa || 'Sem empresa') === CB.emp);
+    return L;
+  }
+  function empresas() {
+    const s = new Set((CB.contas || []).map(c => c.empresa)); (CB.linhas || []).forEach(r => s.add(r.empresa || 'Sem empresa'));
+    return [...s].filter(Boolean).sort();
+  }
+  const soma = (L, f) => L.reduce((s, r) => s + (f(r) ? Math.abs(num(r.valor)) : 0), 0);
+
+  function filtrosHtml() {
+    return '<label>De<input type="date" id="cb-de" value="' + CB.de + '" onchange="cbPeriodo()"></label><label>Até<input type="date" id="cb-ate" value="' + CB.ate + '" onchange="cbPeriodo()"></label>'
+      + '<label>Empresa<select onchange="cbEmp(this.value)"><option value="">Todas</option>' + empresas().map(e => '<option value="' + esc(e) + '"' + (e === CB.emp ? ' selected' : '') + '>' + esc(curto(e)) + '</option>').join('') + '</select></label>'
+      + '<button class="btn btn-ghost" onclick="cbRecarregar()">↻ Atualizar</button>';
+  }
+  function kpiHtml(itens) {
+    return '<div class="kpi-row">' + itens.map(k => '<div class="kpi ' + k[0] + '"><div class="kpi-l">' + k[1] + '</div><div class="kpi-v">' + k[2] + '</div><div class="kpi-m">' + k[3] + '</div></div>').join('') + '</div>';
+  }
+  const vazio = t => '<div class="tbl-wrap"><div class="sd-vazio">' + t + '</div></div>';
+
+  function agrupar(L) {
+    const por = {};
+    L.forEach(r => {
+      const k = r.empresa || 'Sem empresa', o = por[k] = por[k] || { emp: k, n: 0, ent: 0, sai: 0, gIn: 0, gOut: 0, conf: 0, juros: 0, cat: {}, bancos: new Set() };
+      const v = num(r.valor); o.n++; o.bancos.add(r.banco);
+      o.cat[r._cat] = (o.cat[r._cat] || 0) + v;
+      if (r._cat === 'transf_grupo') { v > 0 ? o.gIn += v : o.gOut += -v; }
+      else if (r._cat === 'grupo_conferir') o.conf += -v;
+      else { v > 0 ? o.ent += v : o.sai += -v; if (r._cat === 'tarifa_juros') o.juros += -v; }
+    });
+    return Object.values(por).sort((a, b) => a.emp.localeCompare(b.emp));
+  }
+
+  function abaResumo(L) {
+    const A = agrupar(L), T = A.reduce((t, o) => { ['n', 'ent', 'sai', 'gIn', 'gOut', 'conf', 'juros'].forEach(k => t[k] += o[k]); return t; }, { n: 0, ent: 0, sai: 0, gIn: 0, gOut: 0, conf: 0, juros: 0 });
+    el('cb-kpis').innerHTML = kpiHtml([
+      ['kg', 'Entradas externas', R(T.ent), 'sem transferências do grupo'],
+      ['kr', 'Saídas externas', R(T.sai), 'sem transferências do grupo'],
+      [T.ent - T.sai - T.conf < 0 ? 'kr' : 'kg', 'Resultado do período', R(T.ent - T.sai - T.conf), 'entradas − saídas − "conferir"'],
+      ['ka', 'Entre empresas', R(T.gIn), 'recebido; enviado ' + R(T.gOut)],
+      [T.juros ? 'kr' : 'kg', 'Juros, multas e tarifas', R(T.juros), 'custo do limite no período']
+    ]);
+    if (!L.length) return vazio('Nenhum lançamento no período. Os extratos chegam quando a Bruna coloca os arquivos OFX do banco na pasta do robô.');
+    let h = '<div class="tbl-wrap"><div class="tbl-head"><span class="tbl-title">Por empresa</span><span class="tbl-ct">' + A.length + '</span></div><div class="sd-scroll"><table><thead><tr><th>Empresa</th><th class="sd-num">Lançam.</th><th class="sd-num">Entradas</th><th class="sd-num">Saídas</th><th class="sd-num">Massa Viva (conferir)</th><th class="sd-num">Resultado</th><th class="sd-num">Entre empresas ±</th><th class="sd-num">Juros e tarifas</th></tr></thead><tbody>';
+    A.forEach(o => {
+      const res = o.ent - o.sai - o.conf;
+      h += '<tr><td><b>' + esc(curto(o.emp)) + '</b> <span style="color:var(--slate);font-size:10px">' + [...o.bancos].map(esc).join(', ') + '</span></td><td class="sd-num">' + o.n + '</td><td class="sd-num">' + R(o.ent) + '</td><td class="sd-num">' + R(o.sai) + '</td><td class="sd-num">' + (o.conf ? R(o.conf) : '—') + '</td><td class="sd-num" style="color:' + (res < 0 ? 'var(--red2)' : 'var(--green2)') + ';font-weight:600">' + R(res) + '</td><td class="sd-num">' + R(o.gIn - o.gOut) + '</td><td class="sd-num">' + (o.juros ? R(o.juros) : '—') + '</td></tr>';
+    });
+    h += '</tbody></table></div><div class="sd-rodape">Cada conta mostra só o período já carregado (veja a aba Extratos recebidos), então compare empresas apenas quando o período for o mesmo. Resultado = entradas − saídas, sem as transferências entre empresas do grupo. Não é saldo bancário: o OFX do Santander não traz o saldo de cada dia. "Entre empresas ±" mostra o que entrou menos o que saiu entre contas do grupo (soma zero quando todas as contas estão carregadas).</div></div>';
+    return h;
+  }
+
+  function abaCanais(L) {
+    el('cb-kpis').innerHTML = '';
+    if (!L.length) return vazio('Nenhum lançamento no período.');
+    const A = agrupar(L);
+    const col = (titulo, cats, sinal) => {
+      const tot = {};
+      let h = '<div class="tbl-wrap"><div class="tbl-head"><span class="tbl-title">' + titulo + '</span></div><div class="sd-scroll"><table><thead><tr><th>Canal</th>' + A.map(o => '<th class="sd-num">' + esc(curto(o.emp)) + '</th>').join('') + '<th class="sd-num">Total</th></tr></thead><tbody>';
+      cats.forEach(c => {
+        const vals = A.map(o => Math.abs(sinal > 0 ? Math.max(o.cat[c] || 0, 0) : Math.min(o.cat[c] || 0, 0))), t = vals.reduce((a, b) => a + b, 0);
+        if (!t) return;
+        h += '<tr><td>' + esc(CAT[c]) + '</td>' + vals.map(v => '<td class="sd-num">' + (v ? R(v) : '—') + '</td>').join('') + '<td class="sd-num"><b>' + R(t) + '</b></td></tr>';
+      });
+      return h + '</tbody></table></div></div>';
+    };
+    return col('Entradas por canal', ORD_ENT, 1) + col('Saídas por tipo', ORD_SAI, -1);
+  }
+
+  function abaGrupo(L) {
+    el('cb-kpis').innerHTML = '';
+    const G = L.filter(r => r._cat === 'transf_grupo' || r._cat === 'grupo_conferir').sort((a, b) => String(b.data).localeCompare(String(a.data)));
+    if (!G.length) return vazio('Nenhuma transferência entre empresas no período.');
+    let h = '<div class="alert an"><span class="aicon">ℹ</span><div><b>Transferências entre empresas do grupo</b> não são receita nem despesa. Em "conferir" ficam PIX para nomes como "Massa Viva" que não têm crédito igual em outra conta do grupo: podem ser repasse a loja sem extrato carregado ou pagamento externo.</div></div>';
+    h += '<div class="tbl-wrap"><div class="tbl-head"><span class="tbl-title">Lançamentos</span><span class="tbl-ct">' + G.length + '</span></div><div class="sd-scroll"><table><thead><tr><th>Data</th><th>Empresa</th><th>Situação</th><th>Contraparte / histórico</th><th class="sd-num">Valor</th></tr></thead><tbody>';
+    G.slice(0, 400).forEach(r => {
+      h += '<tr><td>' + br(r.data) + '</td><td>' + esc(curto(r.empresa)) + '</td><td>' + (r._cat === 'transf_grupo' ? '<span class="badge bok">Pareada</span>' : '<span class="badge bwarn">Conferir</span>') + '</td><td style="white-space:normal">' + esc(r.contraparte || r.historico) + '</td><td class="sd-num" style="color:' + (num(r.valor) < 0 ? 'var(--red2)' : 'var(--green2)') + '">' + R(r.valor) + '</td></tr>';
+    });
+    return h + '</tbody></table></div></div>';
+  }
+
+  function abaLanc(L) {
+    el('cb-kpis').innerHTML = '';
+    const q = sem(CB.busca);
+    let X = L.filter(r => (!CB.cat || r._cat === CB.cat) && (!q || sem(r.historico + ' ' + r.contraparte + ' ' + r.documento).indexOf(q) >= 0));
+    X = X.sort((a, b) => String(b.data).localeCompare(String(a.data)));
+    const sel = '<div class="tbl-wrap"><div class="sd-filtros"><label>Buscar<input type="text" id="cb-busca" placeholder="nome, histórico ou documento" value="' + esc(CB.busca) + '" oninput="cbBusca(this.value)"></label>'
+      + '<label>Tipo<select onchange="cbCat(this.value)"><option value="">Todos</option>' + Object.keys(CAT).map(c => '<option value="' + c + '"' + (c === CB.cat ? ' selected' : '') + '>' + esc(CAT[c]) + '</option>').join('') + '</select></label></div></div>';
+    if (!X.length) return sel + vazio('Nenhum lançamento com esse filtro.');
+    let h = sel + '<div class="tbl-wrap"><div class="tbl-head"><span class="tbl-title">Lançamentos</span><span class="tbl-ct">' + X.length + '</span></div><div class="sd-scroll"><table><thead><tr><th>Data</th><th>Empresa</th><th>Tipo</th><th>Histórico</th><th class="sd-num">Valor</th></tr></thead><tbody>';
+    X.slice(0, 400).forEach(r => {
+      h += '<tr><td>' + br(r.data) + '</td><td>' + esc(curto(r.empresa)) + '</td><td>' + esc(CAT[r._cat] || r._cat) + '</td><td style="white-space:normal">' + esc(r.historico) + '</td><td class="sd-num" style="color:' + (num(r.valor) < 0 ? 'var(--red2)' : 'var(--green2)') + '">' + R(r.valor) + '</td></tr>';
+    });
+    return h + '</tbody></table></div>' + (X.length > 400 ? '<div class="sd-rodape">Mostrando os 400 mais recentes. Use a busca para ver o restante.</div>' : '') + '</div>';
+  }
+
+  // Cobertura: por conta cadastrada, o que já chegou (para ver o que falta baixar).
+  function abaCobertura() {
+    el('cb-kpis').innerHTML = '';
+    const L = CB.linhas || [], por = {};
+    L.forEach(r => { const k = r.conta_id || '—'; const o = por[k] = por[k] || { n: 0, min: '9999', max: '0000', dias: new Set() }; const d = String(r.data).slice(0, 10); o.n++; if (d < o.min) o.min = d; if (d > o.max) o.max = d; o.dias.add(d); });
+    const contas = (CB.contas || []).slice().sort((a, b) => (a.banco + a.empresa).localeCompare(b.banco + b.empresa));
+    let h = '<div class="tbl-wrap"><div class="tbl-head"><span class="tbl-title">Extratos recebidos por conta (no período filtrado)</span><span class="tbl-ct">' + contas.length + '</span></div><div class="sd-scroll"><table><thead><tr><th>Banco</th><th>Empresa</th><th>Conta</th><th>Primeiro</th><th>Último</th><th class="sd-num">Dias com movimento</th><th class="sd-num">Lançam.</th><th>Situação</th></tr></thead><tbody>';
+    contas.forEach(c => {
+      const o = por[c.id];
+      let sit = '<span class="badge bdiv">Sem extrato</span>';
+      if (o) { const falta = Math.round((new Date(CB.ate + 'T00:00:00') - new Date(o.max + 'T00:00:00')) / 864e5); sit = falta > 5 ? '<span class="badge bwarn">Atrasado ' + falta + ' d</span>' : '<span class="badge bok">Em dia</span>'; }
+      h += '<tr><td>' + esc(c.banco) + '</td><td>' + esc(curto(c.empresa)) + '</td><td>' + esc(c.agencia + ' / ' + c.conta) + '</td><td>' + (o ? br(o.min) : '—') + '</td><td>' + (o ? br(o.max) : '—') + '</td><td class="sd-num">' + (o ? o.dias.size : 0) + '</td><td class="sd-num">' + (o ? o.n : 0) + '</td><td>' + sit + '</td></tr>';
+    });
+    return h + '</tbody></table></div><div class="sd-rodape">O Santander corta o OFX em 520 lançamentos. Se uma conta mostra poucos dias com movimento no meio do período, baixe o extrato em períodos menores (Shammah e Kadosh 5 dias; Efraim, Neriah, Shekinah e Efata 10; Gedulah e Yannis 14).</div></div>';
+  }
+
+  function render() {
+    const corpo = el('cb-corpo'); if (!corpo) return;
+    document.querySelectorAll('#page-concbanco .itab').forEach(b => b.classList.toggle('active', b.dataset.aba === CB.aba));
+    const fb = el('cb-filtros'); if (fb && (!document.activeElement || document.activeElement.id !== 'cb-busca')) fb.innerHTML = filtrosHtml();
+    if (CB.erro) { corpo.innerHTML = msgErro(CB.erro); el('cb-kpis').innerHTML = ''; return; }
+    if (CB.carregando && !CB.linhas) { el('cb-kpis').innerHTML = ''; corpo.innerHTML = vazio('Carregando…'); return; }
+    if (!CB.linhas) return;
+    const L = visiveis();
+    const fn = { resumo: abaResumo, canais: abaCanais, grupo: abaGrupo, lanc: abaLanc, cobertura: abaCobertura }[CB.aba];
+    corpo.innerHTML = fn(L) || '';
+  }
+
+  window.cbRender = function () { carregar(false); };
+  window.cbAba = function (a) { CB.aba = a; render(); };
+  window.cbRecarregar = function () { carregar(true); };
+  window.cbPeriodo = function () { const de = el('cb-de').value, ate = el('cb-ate').value; if (!de || !ate) return; CB.de = de; CB.ate = ate; carregar(false); };
+  window.cbEmp = function (v) { CB.emp = v; render(); };
+  window.cbBusca = function (v) { CB.busca = v; render(); };
+  window.cbCat = function (v) { CB.cat = v; render(); };
+  window.cbDebug = CB;
 })();
 </script>
 </body>
