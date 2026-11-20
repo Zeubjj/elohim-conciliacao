@@ -9580,7 +9580,7 @@ const nz = s => { const v = parseFloat(s); return isNaN(v) ? 0 : v; };
 function adivinhaFator(xProd, uCom){
   const n = String(xProd||'').toUpperCase(), u = String(uCom||'').toUpperCase();
   if (['KG','L','LT','LITRO','G','ML'].includes(u)) return 1;
-  let m = n.match(/\b(?:CX|CAIXA|FD|FARDO|PCT|PACOTE|DP|DISPLAY)\.?\s*(?:C\/|COM|COM\s)?\s*(\d{1,4})\b/) || n.match(/\bC\/\s*(\d{1,4})\b/) || n.match(/\b(\d{1,3})\s*[X\*]\s*\d/) || n.match(/\b(\d{1,4})\s*(?:UN|UND|UNID)\b/);
+  let m = n.match(/\b(?:CX|CAIXA|FD|FARDO|PCT|PACOTE|DP|DISPLAY)\.?\s*(?:C\/|COM|COM\s)?\s*(\d{1,4})\b/) || n.match(/\bC\/\s*(\d{1,4})\b/) || n.match(/\b(\d{1,3})\s*[X\*]\s*\d/) || n.match(/(?:^|\D)(\d{1,4})\s*(?:UNIDADES?|UNIDS?|UNDS?|UNI|UN)\b/);
   if (m){ const f = parseInt(m[1],10); if (f >= 1 && f <= 1000) return f; }
   return 1;
 }
@@ -9717,6 +9717,28 @@ window.pfNfImportar = function(ni){
   n.jaImportada = true;
   nfRenderListas();
   toast(`${comprasNovas} compra(s) registrada(s), ${novos} item(ns) novo(s). Veja na aba Itens.`);
+};
+
+window.pfCorrigirEmbalagens = function(aplicar){
+  const linhas = []; let n = 0;
+  Object.values(P.itens).forEach(it => {
+    if (it.tipo === 'receita' || !(it.compras||[]).length) return;
+    const f = adivinhaFator(it.nome, 'UN');
+    if (f <= 1) return;
+    const vs = Object.keys(P.vinc).filter(k => P.vinc[k].id === it.id);
+    if (!vs.length || !vs.every(k => (P.vinc[k].fator||1) === 1)) return;
+    if (it.custoManual != null) { linhas.push(it.nome + ' | PULADO (tem custo manual)'); return; }
+    const de = it.compras[0].custo, para = +(de / f).toFixed(4);
+    linhas.push(it.nome + ' | ' + f + ' un/pacote | custo ' + de.toFixed(2) + ' -> ' + para.toFixed(2));
+    if (aplicar){
+      it.compras.forEach(c => { c.custo = +(c.custo / f).toFixed(4); c.q = c.q * f; });
+      vs.forEach(k => { P.vinc[k].fator = f; });
+      salvarItem(it.id); n++;
+    }
+  });
+  if (aplicar){ salvarVinc(); desenhar(); }
+  console.log(linhas.join('\n') + '\n' + (aplicar ? n + ' item(ns) corrigido(s).' : 'PRÉVIA: nada foi alterado. Para aplicar: pfCorrigirEmbalagens(true)'));
+  return linhas.length;
 };
 
 /* ── Inicialização ── */
